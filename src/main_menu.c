@@ -1,5 +1,6 @@
 #include "global.h"
 #include "trainer_pokemon_sprites.h"
+#include "battle_main.h"
 #include "bg.h"
 #include "constants/rgb.h"
 #include "constants/songs.h"
@@ -232,6 +233,11 @@ void CreateYesNoMenuParameterized(u8, u8, u16, u16, u8, u8);
 static void Task_NewGameBirchSpeech_SlidePlatformAway2(u8);
 static void Task_NewGameBirchSpeech_ReshowBirchLotad(u8);
 static void Task_NewGameBirchSpeech_WaitForSpriteFadeInAndTextPrinter(u8);
+static void Task_NewGameBirchSpeech_GymTypePrompt(u8);
+static void Task_NewGameBirchSpeech_WaitGymTypePrompt(u8);
+static void Task_NewGameBirchSpeech_WaitGymTypeFadeBirch(u8);
+static void Task_NewGameBirchSpeech_WaitGymTypeChoice(u8);
+static void NewGameBirchSpeech_ShowGymTypeMenu(void);
 static void Task_NewGameBirchSpeech_AreYouReady(u8);
 static void Task_NewGameBirchSpeech_ShrinkPlayer(u8);
 static void SpriteCB_MovePlayerDownWhileShrinking(struct Sprite *);
@@ -412,16 +418,23 @@ static const struct WindowTemplate sNewGameBirchSpeechTextWindows[] =
         .baseBlock = 0x6D
     },
     {
+        // Reused by the gym-type selection list (unused elsewhere in the speech).
+        // 9x12 = 108 tiles at base 0x85 -> tiles 133..240, clear of the window
+        // frame gfx at 0xF3 and the dialog gfx at 0xFC. Top row 1 so the bottom
+        // border lands on row 13, clear of the message box frame at row 14.
         .bg = 0,
-        .tilemapLeft = 3,
-        .tilemapTop = 2,
+        .tilemapLeft = 11,
+        .tilemapTop = 1,
         .width = 9,
-        .height = 10,
+        .height = 12,
         .paletteNum = 15,
         .baseBlock = 0x85
     },
     DUMMY_WIN_TEMPLATE
 };
+
+#define GYM_TYPE_MENU_WIN     2
+#define GYM_TYPE_MAX_SHOWED   6
 
 static const u16 sMainMenuBgPal[] = INCGFX_U16("graphics/interface/main_menu_bg.pal", ".gbapal");
 static const u16 sMainMenuTextPal[] = INCGFX_U16("graphics/interface/main_menu_text.pal", ".gbapal");
@@ -1723,13 +1736,143 @@ static void Task_NewGameBirchSpeech_WaitForSpriteFadeInAndTextPrinter(u8 taskId)
         gSprites[gTasks[taskId].tLotadSpriteId].oam.objMode = ST_OAM_OBJ_NORMAL;
         if (!RunTextPrintersAndIsPrinter0Active())
         {
-            gSprites[gTasks[taskId].tBirchSpriteId].oam.objMode = ST_OAM_OBJ_BLEND;
-            gSprites[gTasks[taskId].tLotadSpriteId].oam.objMode = ST_OAM_OBJ_BLEND;
-            NewGameBirchSpeech_StartFadeOutTarget1InTarget2(taskId, 2);
-            NewGameBirchSpeech_StartFadePlatformIn(taskId, 1);
-            gTasks[taskId].tTimer = 64;
-            gTasks[taskId].func = Task_NewGameBirchSpeech_AreYouReady;
+            // Keep Birch/Lotad on screen; ask the player which type their
+            // gym will specialize in before the send-off.
+            gTasks[taskId].func = Task_NewGameBirchSpeech_GymTypePrompt;
         }
+    }
+}
+
+// Index -> TYPE_* for the 18 selectable gym specialties (all standard types,
+// skipping TYPE_NONE, TYPE_MYSTERY (???) and TYPE_STELLAR).
+#define NUM_GYM_TYPE_CHOICES 18
+static const u8 sGymTypeChoices[NUM_GYM_TYPE_CHOICES] =
+{
+    TYPE_NORMAL, TYPE_FIGHTING, TYPE_FLYING, TYPE_POISON, TYPE_GROUND,
+    TYPE_ROCK,   TYPE_BUG,      TYPE_GHOST,  TYPE_STEEL,  TYPE_FIRE,
+    TYPE_WATER,  TYPE_GRASS,    TYPE_ELECTRIC, TYPE_PSYCHIC, TYPE_ICE,
+    TYPE_DRAGON, TYPE_DARK,     TYPE_FAIRY,
+};
+
+static struct ListMenuItem sGymTypeMenuItems[NUM_GYM_TYPE_CHOICES];
+static u8 sGymTypeListTaskId;
+static u8 sGymTypeArrowTaskId;
+static u16 sGymTypeListScrollOffset;
+
+static const struct ListMenuTemplate sGymTypeListMenuTemplate =
+{
+    .items = sGymTypeMenuItems,
+    .moveCursorFunc = ListMenuDefaultCursorMoveFunc,
+    .totalItems = NUM_GYM_TYPE_CHOICES,
+    .maxShowed = GYM_TYPE_MAX_SHOWED,
+    .windowId = GYM_TYPE_MENU_WIN,
+    .item_X = 8,
+    .upText_Y = 1,
+    .cursorPal = 2,
+    .fillValue = 1,
+    .cursorShadowPal = 3,
+    .lettersSpacing = 1,
+    .scrollMultiple = LIST_NO_MULTIPLE_SCROLL,
+    .fontId = FONT_NORMAL,
+    .cursorKind = CURSOR_BLACK_ARROW,
+};
+
+static void Task_NewGameBirchSpeech_GymTypePrompt(u8 taskId)
+{
+    NewGameBirchSpeech_ClearWindow(0);
+    StringExpandPlaceholders(gStringVar4, gText_Birch_GymTypePrompt);
+    AddTextPrinterForMessage(TRUE);
+    gTasks[taskId].func = Task_NewGameBirchSpeech_WaitGymTypePrompt;
+}
+
+// Once the prompt is printed, clear Birch/Lotad away so the type list sits on a
+// clean background instead of behind the professor's sprite.
+static void Task_NewGameBirchSpeech_WaitGymTypePrompt(u8 taskId)
+{
+    if (!RunTextPrintersAndIsPrinter0Active())
+    {
+        gSprites[gTasks[taskId].tBirchSpriteId].oam.objMode = ST_OAM_OBJ_BLEND;
+        gSprites[gTasks[taskId].tLotadSpriteId].oam.objMode = ST_OAM_OBJ_BLEND;
+        NewGameBirchSpeech_StartFadeOutTarget1InTarget2(taskId, 2);
+        NewGameBirchSpeech_StartFadePlatformIn(taskId, 1);
+        gTasks[taskId].func = Task_NewGameBirchSpeech_WaitGymTypeFadeBirch;
+    }
+}
+
+static void Task_NewGameBirchSpeech_WaitGymTypeFadeBirch(u8 taskId)
+{
+    if (gTasks[taskId].tIsDoneFadingSprites)
+    {
+        gSprites[gTasks[taskId].tBirchSpriteId].invisible = TRUE;
+        gSprites[gTasks[taskId].tLotadSpriteId].invisible = TRUE;
+        NewGameBirchSpeech_ShowGymTypeMenu();
+        gTasks[taskId].func = Task_NewGameBirchSpeech_WaitGymTypeChoice;
+    }
+}
+
+// Draws a scrolling list of the 18 type names into the scene's own window 2
+// (reusing its reserved VRAM tiles and the already-loaded window frame), so it
+// never collides with the message box or the background like the generic
+// overworld multichoice would. Item labels point straight at the ROM type names
+// since this menu is torn down manually and never frees them.
+static void NewGameBirchSpeech_ShowGymTypeMenu(void)
+{
+    u32 i;
+    struct ScrollArrowsTemplate arrows;
+    const struct WindowTemplate *win = &sNewGameBirchSpeechTextWindows[GYM_TYPE_MENU_WIN];
+
+    for (i = 0; i < NUM_GYM_TYPE_CHOICES; i++)
+    {
+        sGymTypeMenuItems[i].name = gTypesInfo[sGymTypeChoices[i]].name;
+        sGymTypeMenuItems[i].id = i;
+    }
+
+    DrawMainMenuWindowBorder(win, 0xF3);
+    FillWindowPixelBuffer(GYM_TYPE_MENU_WIN, PIXEL_FILL(1));
+    PutWindowTilemap(GYM_TYPE_MENU_WIN);
+    CopyWindowToVram(GYM_TYPE_MENU_WIN, COPYWIN_FULL);
+
+    gMultiuseListMenuTemplate = sGymTypeListMenuTemplate;
+    sGymTypeListScrollOffset = 0;
+    sGymTypeListTaskId = ListMenuInit(&gMultiuseListMenuTemplate, 0, 0);
+
+    // Up/down indicator arrows centered above and below the list window.
+    arrows.firstArrowType = SCROLL_ARROW_UP;
+    arrows.firstX = (win->tilemapLeft + win->width / 2) * 8;
+    arrows.firstY = win->tilemapTop * 8 - 2;
+    arrows.secondArrowType = SCROLL_ARROW_DOWN;
+    arrows.secondX = arrows.firstX;
+    arrows.secondY = (win->tilemapTop + win->height) * 8 + 2;
+    arrows.fullyUpThreshold = 0;
+    arrows.fullyDownThreshold = NUM_GYM_TYPE_CHOICES - GYM_TYPE_MAX_SHOWED;
+    arrows.tileTag = 2000;
+    arrows.palTag = 100;
+    arrows.palNum = 0;
+    sGymTypeArrowTaskId = AddScrollIndicatorArrowPair(&arrows, &sGymTypeListScrollOffset);
+}
+
+static void Task_NewGameBirchSpeech_WaitGymTypeChoice(u8 taskId)
+{
+    s32 input = ListMenu_ProcessInput(sGymTypeListTaskId);
+
+    ListMenuGetScrollAndRow(sGymTypeListTaskId, &sGymTypeListScrollOffset, NULL);
+
+    switch (input)
+    {
+    case LIST_NOTHING_CHOSEN:
+    case LIST_CANCEL: // selection is required; B does nothing
+        break;
+    default:
+        PlaySE(SE_SELECT);
+        VarSet(VAR_CHOSEN_GYM_TYPE, sGymTypeChoices[input]);
+        DestroyListMenuTask(sGymTypeListTaskId, NULL, NULL);
+        RemoveScrollIndicatorArrowPair(sGymTypeArrowTaskId);
+        NewGameBirchSpeech_ClearGenderWindow(GYM_TYPE_MENU_WIN, TRUE);
+        // Hand off to the send-off. Birch/Lotad are already faded out and
+        // hidden, so AreYouReady proceeds straight to fading the player in.
+        gTasks[taskId].tTimer = 64;
+        gTasks[taskId].func = Task_NewGameBirchSpeech_AreYouReady;
+        break;
     }
 }
 
@@ -1757,6 +1900,7 @@ static void Task_NewGameBirchSpeech_AreYouReady(u8 taskId)
         gTasks[taskId].tPlayerSpriteId = spriteId;
         NewGameBirchSpeech_StartFadeInTarget1OutTarget2(taskId, 2);
         NewGameBirchSpeech_StartFadePlatformOut(taskId, 1);
+        NewGameBirchSpeech_ClearWindow(0);
         StringExpandPlaceholders(gStringVar4, gText_Birch_AreYouReady);
         AddTextPrinterForMessage(TRUE);
         gTasks[taskId].func = Task_NewGameBirchSpeech_ShrinkPlayer;
