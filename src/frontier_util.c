@@ -1,6 +1,7 @@
 #include "global.h"
 #include "frontier_util.h"
 #include "easy_chat.h"
+#include "gym_challenge.h"
 #include "event_data.h"
 #include "battle_setup.h"
 #include "overworld.h"
@@ -1780,6 +1781,10 @@ u8 GetFrontierBrainStatus(void)
 
 void CopyFrontierTrainerText(u8 whichText, u16 trainerId)
 {
+    // Gym challengers use plain text speech instead of easy chat words.
+    if (GymChallenge_CopyChallengerText(whichText, trainerId))
+        return;
+
     switch (whichText)
     {
     case FRONTIER_BEFORE_TEXT:
@@ -3255,6 +3260,13 @@ void FrontierSpeechToString(const u16 *words)
 
 u8 SetFacilityPtrsGetLevel(void)
 {
+    u8 gymLevel;
+
+    // While the player's gym is receiving challengers, all facility trainer
+    // lookups are redirected to the gym challenger tables.
+    if (GymChallenge_OverrideFacilityPtrs(&gymLevel))
+        return gymLevel;
+
     if (gSaveBlock2Ptr->frontier.lvlMode == FRONTIER_LVL_TENT)
     {
         return SetTentPtrsGetLevel();

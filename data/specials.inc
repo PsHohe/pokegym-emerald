@@ -639,3 +639,7 @@ gSpecials::
 	def_special UpdateTrainerCardPhotoIcons
 	def_special StickerManGetBragFlags
 	def_special CheckAddCoins
+	def_special GymChallenge_Begin
+	def_special GymChallenge_PickChallenger
+	def_special GymChallenge_StartBattle, waitstate=1
+	def_special GymChallenge_End

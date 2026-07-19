@@ -38,6 +38,7 @@
 #include "constants/follower_npc.h"
 #include "constants/frontier_util.h"
 #include "constants/game_stat.h"
+#include "constants/gym_challenge.h"
 #include "constants/item.h"
 #include "constants/items.h"
 #include "constants/heal_locations.h"
