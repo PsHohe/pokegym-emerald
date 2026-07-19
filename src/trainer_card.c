@@ -27,6 +27,7 @@
 #include "trainer_pokemon_sprites.h"
 #include "contest_util.h"
 #include "decompress.h"
+#include "gym_challenge.h"
 #include "constants/songs.h"
 #include "constants/game_stat.h"
 #include "constants/battle_frontier.h"
@@ -130,8 +131,9 @@ static void InitTrainerCardData(void);
 static u8 GetSetCardType(void);
 static void PrintNameOnCardFront(void);
 static void PrintIdOnCard(void);
-static void PrintMoneyOnCard(void);
-static void PrintPokedexOnCard(void);
+static void PrintGymPointsOnCard(void);
+static void PrintGymRankOnCard(void);
+static void DrawGymProgressBarOnCard(void);
 static void PrintProfilePhraseOnCard(void);
 static bool8 PrintAllOnCardBack(void);
 static void PrintNameOnCardBack(void);
@@ -765,6 +767,10 @@ static void TrainerCard_GenerateCardForPlayer(struct TrainerCard *trainerCard)
     SetPlayerCardData(trainerCard, CARD_TYPE_EMERALD);
     trainerCard->hasAllFrontierSymbols = HasAllFrontierSymbols();
     trainerCard->frontierBP = gSaveBlock2Ptr->frontier.cardBattlePoints;
+    trainerCard->gymPoints = GymChallenge_GetPoints();
+    trainerCard->gymBarProgress = GymChallenge_GetBarProgress();
+    trainerCard->gymBarThreshold = GymChallenge_GetBarThreshold();
+    trainerCard->gymRank = GymChallenge_GetRank();
     if (trainerCard->hasAllFrontierSymbols)
         trainerCard->stars++;
 
@@ -930,16 +936,17 @@ static bool8 PrintAllOnCardFront(void)
         PrintIdOnCard();
         break;
     case 2:
-        PrintMoneyOnCard();
+        PrintGymPointsOnCard();
         break;
     case 3:
-        PrintPokedexOnCard();
+        PrintGymRankOnCard();
         break;
     case 4:
         PrintTimeOnCard();
         break;
     case 5:
         PrintProfilePhraseOnCard();
+        DrawGymProgressBarOnCard();
         break;
     default:
         sData->printState = 0;
@@ -1036,18 +1043,17 @@ static void PrintIdOnCard(void)
     AddTextPrinterParameterized3(WIN_CARD_TEXT, FONT_NORMAL, xPos, top, sTrainerCardTextColors, TEXT_SKIP_DRAW, buffer);
 }
 
-static void PrintMoneyOnCard(void)
+static void PrintGymPointsOnCard(void)
 {
     s32 xOffset;
     u8 top;
 
     if (!sData->isHoenn)
-        AddTextPrinterParameterized3(WIN_CARD_TEXT, FONT_NORMAL, 20, 56, sTrainerCardTextColors, TEXT_SKIP_DRAW, gText_TrainerCardMoney);
+        AddTextPrinterParameterized3(WIN_CARD_TEXT, FONT_NORMAL, 20, 56, sTrainerCardTextColors, TEXT_SKIP_DRAW, gText_TrainerCardGymPoints);
     else
-        AddTextPrinterParameterized3(WIN_CARD_TEXT, FONT_NORMAL, 16, 57, sTrainerCardTextColors, TEXT_SKIP_DRAW, gText_TrainerCardMoney);
+        AddTextPrinterParameterized3(WIN_CARD_TEXT, FONT_NORMAL, 16, 57, sTrainerCardTextColors, TEXT_SKIP_DRAW, gText_TrainerCardGymPoints);
 
-    ConvertIntToDecimalStringN(gStringVar1, sData->trainerCard.money, STR_CONV_MODE_LEFT_ALIGN, MAX_MONEY_DIGITS);
-    StringExpandPlaceholders(gStringVar4, gText_PokedollarVar1);
+    ConvertIntToDecimalStringN(gStringVar4, sData->trainerCard.gymPoints, STR_CONV_MODE_LEFT_ALIGN, MAX_MONEY_DIGITS);
     if (!sData->isHoenn)
     {
         xOffset = GetStringRightAlignXOffset(FONT_NORMAL, gStringVar4, 144);
@@ -1069,29 +1075,48 @@ static u16 GetCaughtMonsCount(void)
         return GetRegionalPokedexCount(FLAG_GET_CAUGHT);
 }
 
-static void PrintPokedexOnCard(void)
+static void PrintGymRankOnCard(void)
 {
     s32 xOffset;
     u8 top;
-    if (FlagGet(FLAG_SYS_POKEDEX_GET))
+
+    if (!sData->isHoenn)
+        AddTextPrinterParameterized3(WIN_CARD_TEXT, FONT_NORMAL, 20, 72, sTrainerCardTextColors, TEXT_SKIP_DRAW, gText_TrainerCardGymRank);
+    else
+        AddTextPrinterParameterized3(WIN_CARD_TEXT, FONT_NORMAL, 16, 73, sTrainerCardTextColors, TEXT_SKIP_DRAW, gText_TrainerCardGymRank);
+    ConvertIntToDecimalStringN(gStringVar4, sData->trainerCard.gymRank, STR_CONV_MODE_LEFT_ALIGN, 2);
+    if (!sData->isHoenn)
     {
-        if (!sData->isHoenn)
-            AddTextPrinterParameterized3(WIN_CARD_TEXT, FONT_NORMAL, 20, 72, sTrainerCardTextColors, TEXT_SKIP_DRAW, gText_TrainerCardPokedex);
-        else
-            AddTextPrinterParameterized3(WIN_CARD_TEXT, FONT_NORMAL, 16, 73, sTrainerCardTextColors, TEXT_SKIP_DRAW, gText_TrainerCardPokedex);
-        StringCopy(ConvertIntToDecimalStringN(gStringVar4, sData->trainerCard.caughtMonsCount, STR_CONV_MODE_LEFT_ALIGN, 4), gText_EmptyString6);
-        if (!sData->isHoenn)
-        {
-            xOffset = GetStringRightAlignXOffset(FONT_NORMAL, gStringVar4, 144);
-            top = 72;
-        }
-        else
-        {
-            xOffset = GetStringRightAlignXOffset(FONT_NORMAL, gStringVar4, 128);
-            top = 73;
-        }
-        AddTextPrinterParameterized3(WIN_CARD_TEXT, FONT_NORMAL, xOffset, top, sTrainerCardTextColors, TEXT_SKIP_DRAW, gStringVar4);
+        xOffset = GetStringRightAlignXOffset(FONT_NORMAL, gStringVar4, 144);
+        top = 72;
     }
+    else
+    {
+        xOffset = GetStringRightAlignXOffset(FONT_NORMAL, gStringVar4, 128);
+        top = 73;
+    }
+    AddTextPrinterParameterized3(WIN_CARD_TEXT, FONT_NORMAL, xOffset, top, sTrainerCardTextColors, TEXT_SKIP_DRAW, gStringVar4);
+}
+
+// Rank-up progress bar: label + a framed bar that fills with the Gym Points
+// earned this rank. Drawn in the space link cards use for the profile
+// phrase, so the player's own card only.
+static void DrawGymProgressBarOnCard(void)
+{
+    u32 fill;
+    u32 barX = 76, barY = 109, barWidth = 52, barHeight = 8;
+    struct TrainerCard *card = &sData->trainerCard;
+
+    if (sData->isLink || card->gymBarThreshold == 0)
+        return;
+
+    AddTextPrinterParameterized3(WIN_CARD_TEXT, FONT_NORMAL, 16, 105, sTrainerCardTextColors, TEXT_SKIP_DRAW, gText_TrainerCardNextRank);
+
+    fill = min(card->gymBarProgress, card->gymBarThreshold);
+    fill = (barWidth - 2) * fill / card->gymBarThreshold;
+    FillWindowPixelRect(WIN_CARD_TEXT, PIXEL_FILL(TEXT_COLOR_DARK_GRAY), barX, barY, barWidth, barHeight);
+    FillWindowPixelRect(WIN_CARD_TEXT, PIXEL_FILL(TEXT_COLOR_TRANSPARENT), barX + 1, barY + 1, barWidth - 2, barHeight - 2);
+    FillWindowPixelRect(WIN_CARD_TEXT, PIXEL_FILL(TEXT_COLOR_DARK_GRAY), barX + 1, barY + 1, fill, barHeight - 2);
 }
 
 static const u8 *const sTimeColonTextColors[] = {sTrainerCardTextColors, sTimeColonInvisibleTextColors};

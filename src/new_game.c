@@ -184,6 +184,7 @@ void NewGameInitData(void)
     PlayTimeCounter_Reset();
     ClearPokedexFlags();
     InitEventData();
+    VarSet(VAR_GYM_RANK, 1);
     ClearTVShowData();
     ResetGabbyAndTy();
     ClearSecretBases();

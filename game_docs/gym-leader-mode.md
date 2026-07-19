@@ -35,6 +35,14 @@ The PoC is a single self-contained slice that proves the end-to-end loop:
 - Each challenger has a randomly generated party, a unique overworld sprite,
   overworld intro dialogue, and plain-text in-battle win/lose speech.
 - Battles award **no EXP or prize money** and never white the player out.
+- Each win pays **Gym Points** (`4 × levelCap × classMoneyRate`, mirroring
+  prize money — 240–360 at rank 1), announced with a fanfare. Points
+  accumulate in a save-backed wallet and a per-rank total that fills the
+  **rank-up bar** (rank 1 threshold: 4,800). Filling the bar unlocks the
+  (future) rank-up exam; the attendant announces it. See
+  `spike-gym-points.md` for the design.
+- The **trainer card front** shows POINTS, RANK (from `VAR_GYM_RANK`), and a
+  NEXT RANK progress bar in place of money and the Pokédex count.
 
 Everything lives on the test map `TestingGrounds_Exterior1`.
 
@@ -42,13 +50,17 @@ Everything lives on the test map `TestingGrounds_Exterior1`.
 
 | File | Purpose |
 | --- | --- |
-| `src/gym_challenge.c` | All gym logic: challenger tables, mon pools, party generation hooks, team validation, battle launch, in-battle speech. |
+| `src/gym_challenge.c` | All gym logic: challenger tables, mon pools, party generation hooks, team validation, battle launch, in-battle speech, Gym Points award/accessors and rank-up bar gating. |
 | `include/gym_challenge.h` | C-facing API (functions + facility-pointer/speech hooks). |
 | `include/constants/gym_challenge.h` | Constants shared between C **and** event scripts (validation results, rank-1 rules). Included from `data/event_scripts.s`. |
 | `data/maps/TestingGrounds_Exterior1/map.json` | Object events: gym attendant, gift NPC, and the variable-sprite challenger object. |
 | `data/maps/TestingGrounds_Exterior1/scripts.inc` | The gym day loop, gift NPC, validation messages, movement, and all dialogue text. |
-| `data/specials.inc` | Registers the four gym script specials (appended at end). |
+| `data/specials.inc` | Registers the six gym script specials (appended at end). |
 | `src/frontier_util.c` | Two small hook points (see §4). |
+| `include/global.h` | `struct GymLeaderState` (points wallet + per-rank bar total) in SaveBlock3. |
+| `src/load_save.c` | Encryption-key rotation covers the points wallet. |
+| `src/new_game.c` | Initializes `VAR_GYM_RANK` to 1. |
+| `src/trainer_card.c` | Card front reskin: POINTS, RANK, and the NEXT RANK progress bar. |
 
 ### How to test
 
@@ -224,11 +236,10 @@ Recommended next steps, roughly in order:
    Rank should drive: team size, level cap, number of challengers, challenger
    difficulty (IV band / mon pool tier), and possibly the chance of a
    higher-difficulty challenger appearing.
-2. **Persistent gym state.** Move the session bookkeeping (currently EWRAM
-   statics in `gym_challenge.c`) that needs to persist — rank, win/loss record,
-   reputation, currency — into a save block struct. There is slack in the
-   PokémonStorage save sectors (~1470 bytes) and further space freeable via
-   `include/config/save.h` `FREE_*` switches; see the spike notes.
+2. **Persistent gym state.** Partially done: the Gym Points wallet and
+   per-rank bar total live in `SaveBlock3.gym` (`struct GymLeaderState`,
+   `include/global.h`) and the rank in `VAR_GYM_RANK`. Win/loss records and
+   other career stats still need fields when they exist.
 3. **Player-chosen gym type.** Replace `#define GYM_TYPE TYPE_NORMAL` with a
    saved value chosen at game start, and key the challenger mon pools off the
    gym type (e.g. counter-type challengers).

@@ -6,8 +6,10 @@
 #include "battle_transition.h"
 #include "event_data.h"
 #include "frontier_util.h"
+#include "data.h"
 #include "gym_challenge.h"
 #include "main.h"
+#include "money.h"
 #include "overworld.h"
 #include "pokemon.h"
 #include "random.h"
@@ -322,6 +324,67 @@ void GymChallenge_StartBattle(void)
 void GymChallenge_End(void)
 {
     sChallengeActive = FALSE;
+}
+
+// Gym Points wallet and rank-up bar. The wallet reuses the money helpers, so
+// it shares money's cap and save encryption; the bar total is plain and only
+// ever compared against the rank's threshold.
+
+u32 GymChallenge_GetPoints(void)
+{
+    return GetMoney(&gSaveBlock3Ptr->gym.points);
+}
+
+u32 GymChallenge_GetBarProgress(void)
+{
+    return gSaveBlock3Ptr->gym.pointsEarnedThisRank;
+}
+
+// These two return rank-1 values until the gym rank system exists; they are
+// the single lookup point to swap for per-rank tables later.
+u32 GymChallenge_GetBarThreshold(void)
+{
+    return GYM_RANK1_BAR_THRESHOLD;
+}
+
+u32 GymChallenge_GetRank(void)
+{
+    return VarGet(VAR_GYM_RANK);
+}
+
+// Mirrors GetTrainerMoneyToGive's formula (4 * lastMonLevel * classRate).
+// Generated parties are all at the rank's level cap, so the cap stands in
+// for the last mon's level.
+static u32 CalcChallengerPoints(u32 challengerId)
+{
+    u32 classRate = gTrainerClasses[gFacilityClassToTrainerClass[sRank1Challengers[challengerId].facilityClass]].money;
+
+    if (classRate == 0)
+        classRate = 5;
+    return 4 * GYM_RANK1_LEVEL_CAP * classRate;
+}
+
+// Awards Gym Points for defeating the current challenger. Copies the amount
+// to gStringVar1 for the reward message. VAR_RESULT receives TRUE if this
+// win just filled the rank-up bar (for a one-time announcement).
+void GymChallenge_AwardVictoryPoints(void)
+{
+    u32 points = CalcChallengerPoints(sCurrentChallenger);
+    u32 threshold = GymChallenge_GetBarThreshold();
+    bool32 wasFull = gSaveBlock3Ptr->gym.pointsEarnedThisRank >= threshold;
+
+    AddMoney(&gSaveBlock3Ptr->gym.points, points);
+    gSaveBlock3Ptr->gym.pointsEarnedThisRank += points;
+    ConvertIntToDecimalStringN(gStringVar1, points, STR_CONV_MODE_LEFT_ALIGN, MAX_MONEY_DIGITS);
+    gSpecialVar_Result = !wasFull && gSaveBlock3Ptr->gym.pointsEarnedThisRank >= threshold;
+}
+
+// VAR_RESULT receives whether the rank-up exam is unlocked. A full bar only
+// unlocks the exam; ranking up is story-driven and resets the bar, not the
+// wallet.
+void GymChallenge_IsRankUpUnlocked(void)
+{
+    gSpecialVar_Result = gSaveBlock3Ptr->gym.pointsEarnedThisRank >= GymChallenge_GetBarThreshold();
 }
 
 static void Task_StartGymBattleAfterTransition(u8 taskId)

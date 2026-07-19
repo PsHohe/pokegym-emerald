@@ -69,6 +69,13 @@ TestingGrounds_Exterior1_EventScript_DoChallengeBattle::
 	specialvar VAR_RESULT, GetBattleOutcome
 	goto_if_ne VAR_RESULT, B_OUTCOME_WON, TestingGrounds_Exterior1_EventScript_LeaderLost
 	msgbox TestingGrounds_Exterior1_Text_ChallengerDefeated, MSGBOX_DEFAULT
+	special GymChallenge_AwardVictoryPoints
+	playfanfare MUS_OBTAIN_B_POINTS
+	message TestingGrounds_Exterior1_Text_EarnedGymPoints
+	waitfanfare
+	waitmessage
+	goto_if_eq VAR_RESULT, TRUE, TestingGrounds_Exterior1_EventScript_AnnounceBarFilled
+TestingGrounds_Exterior1_EventScript_ChallengerLeaves::
 	closemessage
 	applymovement LOCALID_TESTING_GYM_CHALLENGER, TestingGrounds_Exterior1_Movement_ChallengerExit
 	waitmovement 0
@@ -78,6 +85,17 @@ TestingGrounds_Exterior1_EventScript_DoChallengeBattle::
 	special GymChallenge_End
 	special HealPlayerParty
 	msgbox TestingGrounds_Exterior1_Text_GymDayComplete, MSGBOX_DEFAULT
+	special GymChallenge_IsRankUpUnlocked
+	goto_if_eq VAR_RESULT, TRUE, TestingGrounds_Exterior1_EventScript_ExamReminder
+	release
+	end
+
+TestingGrounds_Exterior1_EventScript_AnnounceBarFilled::
+	msgbox TestingGrounds_Exterior1_Text_BarFilled, MSGBOX_DEFAULT
+	goto TestingGrounds_Exterior1_EventScript_ChallengerLeaves
+
+TestingGrounds_Exterior1_EventScript_ExamReminder::
+	msgbox TestingGrounds_Exterior1_Text_ExamAvailable, MSGBOX_DEFAULT
 	release
 	end
 
@@ -225,6 +243,20 @@ TestingGrounds_Exterior1_Text_IntroTommy:
 	.string "type matchups in school!\p"
 	.string "Today's lesson: beating a GYM\n"
 	.string "LEADER!$"
+
+TestingGrounds_Exterior1_Text_EarnedGymPoints:
+	.string "{PLAYER} earned {STR_VAR_1} GYM POINTS!$"
+
+TestingGrounds_Exterior1_Text_BarFilled:
+	.string "ATTENDANT: Incredible!\p"
+	.string "Your GYM's reputation has reached\n"
+	.string "its peak for this rank!\p"
+	.string "You may take the RANK-UP EXAM\n"
+	.string "whenever you feel ready!$"
+
+TestingGrounds_Exterior1_Text_ExamAvailable:
+	.string "ATTENDANT: Remember, the RANK-UP\n"
+	.string "EXAM awaits whenever you're ready!$"
 
 TestingGrounds_Exterior1_Text_ChallengerDefeated:
 	.string "{STR_VAR_1}: Aww… You really are\n"

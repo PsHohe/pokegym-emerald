@@ -273,7 +273,7 @@
 #define VAR_UNUSED_0x40FB                                0x40FB // Unused Var
 #define VAR_UNUSED_0x40FC                                0x40FC // Unused Var
 #define VAR_UNUSED_0x40FD                                0x40FD // Unused Var
-#define VAR_UNUSED_0x40FE                                0x40FE // Unused Var
+#define VAR_GYM_RANK                                     0x40FE // The player's gym rank. Starts at 1 on a new game.
 #define VAR_CHOSEN_GYM_TYPE                              0x40FF // The Pokemon type the player specializes in as a gym leader
 
 #define VARS_END                                         0x40FF

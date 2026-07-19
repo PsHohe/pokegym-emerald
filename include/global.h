@@ -253,6 +253,14 @@ struct NPCFollower
 #include "constants/items.h"
 #define ITEM_FLAGS_COUNT ((ITEMS_COUNT / 8) + ((ITEMS_COUNT % 8) ? 1 : 0))
 
+struct GymLeaderState
+{
+    u32 points;               // Spendable Gym Points. XOR-encrypted with the
+                              // save encryption key, like money (see money.c).
+    u32 pointsEarnedThisRank; // Plain. Fills the rank-up progress bar; reset
+                              // to 0 on rank-up. The wallet above is not.
+};
+
 struct SaveBlock3
 {
 #if OW_USE_FAKE_RTC
@@ -271,6 +279,7 @@ struct SaveBlock3
 #if APRICORN_TREE_COUNT > 0
     u8 apricornTrees[NUM_APRICORN_TREE_BYTES];
 #endif
+    struct GymLeaderState gym;
 }; /* max size 1624 bytes */
 
 extern struct SaveBlock3 *gSaveBlock3Ptr;

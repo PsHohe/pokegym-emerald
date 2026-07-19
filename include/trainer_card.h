@@ -45,6 +45,12 @@ struct TrainerCard
              // which they use for a Wonder Card flag id instead (see CreateTrainerCardInBuffer)
     /*0x60*/ bool16 hasAllFrontierSymbols;
     /*0x62*/ u16 frontierBP;
+             // Gym leader fields, appended after the link-exchanged region so
+             // CopyTrainerCardData's fixed-size copies stay untouched.
+             u32 gymPoints;
+             u32 gymBarProgress;
+             u32 gymBarThreshold;
+             u16 gymRank;
 };
 
 extern struct TrainerCard gTrainerCards[4];
