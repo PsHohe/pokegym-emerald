@@ -117,6 +117,7 @@ void InitChooseHalfPartyForBattle(u8 unused);
 void ClearSelectedPartyOrder(void);
 void ChooseMonForTradingBoard(enum PartyMenuType menuType, MainCallback callback);
 void ChooseMonForMoveTutor(void);
+void ChooseMonForTMMachine(MainCallback exitCallback);
 void ChooseMonForWirelessMinigame(void);
 void OpenPartyMenuInBattle(u8 partyAction);
 void ChooseMonForInBattleItem(void);

@@ -7507,6 +7507,14 @@ void ChooseMonForMoveTutor(void)
     InitPartyMenu(PARTY_MENU_TYPE_FIELD, PARTY_LAYOUT_SINGLE, PARTY_ACTION_MOVE_TUTOR, FALSE, PARTY_MSG_TEACH_WHICH_MON, Task_HandleChooseMonInput, CB2_ReturnToFieldContinueScriptPlayMapMusic);
 }
 
+// The TM Machine's tutor-style teach: the move is in gSpecialVar_0x8005 and
+// gSpecialVar_Result reports whether it was learned (see learnMoveState == 2
+// in Task_LearnNextMoveOrClosePartyMenu).
+void ChooseMonForTMMachine(MainCallback exitCallback)
+{
+    InitPartyMenu(PARTY_MENU_TYPE_FIELD, PARTY_LAYOUT_SINGLE, PARTY_ACTION_MOVE_TUTOR, FALSE, PARTY_MSG_TEACH_WHICH_MON, Task_HandleChooseMonInput, exitCallback);
+}
+
 void ChooseMonForWirelessMinigame(void)
 {
     InitPartyMenu(PARTY_MENU_TYPE_MINIGAME, PARTY_LAYOUT_SINGLE, PARTY_ACTION_MINIGAME, FALSE, PARTY_MSG_CHOOSE_MON_OR_CANCEL, Task_HandleChooseMonInput, CB2_ReturnToFieldContinueScriptPlayMapMusic);

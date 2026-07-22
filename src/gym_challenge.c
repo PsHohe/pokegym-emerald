@@ -663,29 +663,22 @@ static const u16 sGymSignatureMoves[NUMBER_OF_MON_TYPES] =
     [TYPE_FAIRY]    = MOVE_DAZZLING_GLEAM,
 };
 
-// Assigns the gym's tier-1 signature move (from the gym type) and puts the
-// matching TM in the bag. Idempotent: if a signature move is already
-// assigned it only re-buffers the names. Buffers the TM item name to
-// gStringVar2 and the move name to gStringVar3 (gStringVar1 is left alone —
-// the starter gift keeps the type name there). VAR_RESULT receives FALSE
-// only if the TM couldn't be added to the bag.
+// Assigns the gym's tier-1 signature move (from the gym type). Storing it is
+// what unlocks the TM in the TM Machine — no bag item involved. Idempotent:
+// if a signature move is already assigned it only re-buffers the names.
+// Buffers the TM item name to gStringVar2 and the move name to gStringVar3
+// (gStringVar1 is left alone — the starter gift keeps the type name there).
+// VAR_RESULT always receives TRUE.
 void GymChallenge_AssignSignatureTM(void)
 {
     u16 move = gSaveBlock3Ptr->gym.signatureMove;
-    u16 item;
 
     if (move == MOVE_NONE)
     {
         move = sGymSignatureMoves[GetSafeGymType()];
-        if (!AddBagItem(GetTMHMItemIdFromMoveId(move), 1))
-        {
-            gSpecialVar_Result = FALSE;
-            return;
-        }
         gSaveBlock3Ptr->gym.signatureMove = move;
     }
-    item = GetTMHMItemIdFromMoveId(move);
-    CopyItemName(item, gStringVar2);
+    CopyItemName(GetTMHMItemIdFromMoveId(move), gStringVar2);
     StringCopy(gStringVar3, GetMoveName(move));
     gSpecialVar_Result = TRUE;
 }
@@ -740,23 +733,18 @@ void GymChallenge_BufferSignatureUpgradeChoices(void)
     StringCopy(gStringVar2, GetMoveName(choices[1]));
 }
 
-// Replaces the signature move with upgrade choice gSpecialVar_0x8004 (0/1)
-// and puts the new TM in the bag. Buffers the TM item name to gStringVar2
-// and the move name to gStringVar3. VAR_RESULT receives FALSE (and nothing
-// changes) if the bag is full.
+// Replaces the signature move with upgrade choice gSpecialVar_0x8004 (0/1).
+// Storing it unlocks BOTH upgrade options in the TM Machine (see
+// GymChallenge_IsMoveUnlockedBySignature); only the chosen one is free.
+// Buffers the TM item name to gStringVar2 and the move name to gStringVar3.
+// VAR_RESULT always receives TRUE.
 void GymChallenge_UpgradeSignatureTM(void)
 {
     u32 choice = (gSpecialVar_0x8004 != 0);
     u16 move = sGymSignatureUpgrades[GetSafeGymType()][choice];
-    u16 item = GetTMHMItemIdFromMoveId(move);
 
-    if (!AddBagItem(item, 1))
-    {
-        gSpecialVar_Result = FALSE;
-        return;
-    }
     gSaveBlock3Ptr->gym.signatureMove = move;
-    CopyItemName(item, gStringVar2);
+    CopyItemName(GetTMHMItemIdFromMoveId(move), gStringVar2);
     StringCopy(gStringVar3, GetMoveName(move));
     gSpecialVar_Result = TRUE;
 }
@@ -777,6 +765,40 @@ void GymChallenge_BufferSignatureMove(void)
         StringCopy(gStringVar1, GetMoveName(move));
         gSpecialVar_Result = TRUE;
     }
+}
+
+u32 GymChallenge_GetSignatureMove(void)
+{
+    return gSaveBlock3Ptr->gym.signatureMove;
+}
+
+// Whether the signature system unlocks this move in the TM Machine: the
+// tier-1 move once a signature is assigned, and both tier-2 choices once the
+// player has upgraded (the chosen one is the free signature, the other is
+// purchasable at its normal price).
+bool32 GymChallenge_IsMoveUnlockedBySignature(u16 move)
+{
+    u16 sig = gSaveBlock3Ptr->gym.signatureMove;
+    u32 type = GetSafeGymType();
+    const u16 *upgrades = sGymSignatureUpgrades[type];
+
+    if (sig == MOVE_NONE)
+        return FALSE;
+    if (move == sGymSignatureMoves[type])
+        return TRUE;
+    if (sig == upgrades[0] || sig == upgrades[1])
+        return move == upgrades[0] || move == upgrades[1];
+    return FALSE;
+}
+
+// Deducts Gym Points from the wallet (e.g. for a TM Machine purchase).
+// Returns FALSE and deducts nothing if the wallet can't cover it.
+bool32 GymChallenge_TrySpendPoints(u32 amount)
+{
+    if (!IsEnoughMoney(&gSaveBlock3Ptr->gym.points, amount))
+        return FALSE;
+    RemoveMoney(&gSaveBlock3Ptr->gym.points, amount);
+    return TRUE;
 }
 
 // Buffers rank (gStringVar1), level cap (gStringVar2) and bring count

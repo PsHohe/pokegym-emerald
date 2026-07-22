@@ -71,12 +71,13 @@ Everything lives on the test map `TestingGrounds_Exterior1`.
 3. Talk to the gift NPC (Expert ♂, at 10,8): receive **three Pokémon of your
    chosen gym type** at the current rank's level cap, plus the gym's
    **signature TM** (tier-1 move per type, `sGymSignatureMoves` in
-   `src/gym_challenge.c`; sets `gym.signatureMove`). The party menu unlocks
+   `src/gym_challenge.c`; sets `gym.signatureMove`). TMs are **not bag
+   items**: the signature TM and the starter TM group
+   (`FLAG_TM_GROUP_STARTER`) unlock in the **TM Machine** (see §7), which
+   appears in the start menu from this moment. The party menu unlocks
    (`FLAG_SYS_POKEMON_GET`), as if you'd been given a starter. To test the
    off-type rule: rank up to 3+, teach the signature TM to an off-type mon,
-   and it becomes selectable (one per team). Six new TMs (TM51–56:
-   X-Scissor, Shadow Claw, Fire Punch, Psyshock, Avalanche, Dazzling Gleam)
-   were added to `FOREACH_TM` to cover types without a suitable vanilla TM.
+   and it becomes selectable (one per team).
 4. Talk to the **team keeper** (Scientist, at 4,7): register the current
    party as one of the 5 saved teams, view a team's members (stale
    references show as `???`), or clear a team.
@@ -328,5 +329,42 @@ Recommended next steps, roughly in order:
   script run, but any cross-session record must move to the save block.
 - The gift-given flag uses `FLAG_UNUSED_0x020`; pick a permanent flag when the
   real intro flow exists.
+- Vanilla-world TM content (giveitem NPCs, marts, Game Corner prizes, hidden
+  items) is untouched and effectively dead: the TM/HM pocket holds one dummy
+  slot and is skipped in the bag UI, so those scripts silently fail. Convert
+  the ones that survive into `setflag FLAG_TM_GROUP_*` unlocks as the real
+  world is built out.
+
+## 7. The TM Machine (Legends Z-A-style TMs)
+
+TMs are not bag items. Each TM is either **unlocked** or not (no quantity),
+and teaching one costs **Gym Points** — except the current signature move,
+which is free. `BAG_TMHM_COUNT` was shrunk to 1 (reclaiming ~930 bytes of
+SaveBlock1) and the TM/HM pocket is skipped when cycling bag pockets.
+
+**Unlock model** (`IsTMMoveUnlocked` in `src/tm_machine.c`) — fully computed,
+no new save state:
+
+1. **Flag groups**: `src/data/tm_unlock_groups.h` maps event flags
+   (`FLAG_TM_GROUP_STARTER`, `FLAG_TM_GROUP_2..8` in
+   `include/constants/flags.h`) to lists of TM moves. Scripts unlock a whole
+   group with a plain `setflag`; one event can unlock many TMs.
+2. **Signature system** (`GymChallenge_IsMoveUnlockedBySignature`): the
+   tier-1 move for the gym type unlocks once `gym.signatureMove` is
+   assigned; after the rank-5 upgrade **both** tier-2 choices unlock — the
+   chosen one is the free signature, the other costs its normal price.
+
+**Cost** (`GetTMTeachCost`): 0 for the current signature move, otherwise the
+TM item's `price` from `src/data/items.h` (fallback `GYM_TM_DEFAULT_COST`
+in `include/constants/gym_challenge.h` for zero-priced TMs). Spending goes
+through `GymChallenge_TrySpendPoints` (money.c helpers on the gym wallet).
+
+**UI** (`src/tm_machine.c`, modeled on the Move Relearner): start-menu "TMs"
+entry (shown once a signature move exists) → scrolling list of unlocked TMs
+with move data, cost, and current points → confirm → party menu in tutor
+mode (`ChooseMonForTMMachine` in `src/party_menu.c`, `PARTY_ACTION_MOVE_TUTOR`
+— teaches without consuming anything). The tutor flow reports success in
+`VAR_RESULT` (`learnMoveState == 2`), and points are deducted only then, on
+return to the machine.
 - Challengers use the easiest frontier IV band and no EVs/items, tuned to be
   fair for two level-14 mons.

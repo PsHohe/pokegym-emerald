@@ -15,8 +15,6 @@ script TestingGrounds_Exterior1_EventScript_GiftNpc {
     lock
     faceplayer
     if (flag(FLAG_UNUSED_0x020)) {
-        // Retry the signature TM in case the bag was full the first time.
-        special(GymChallenge_AssignSignatureTM)
         msgbox(TestingGrounds_Exterior1_Text_GiftPostGift)
         release
         end
@@ -36,15 +34,12 @@ script TestingGrounds_Exterior1_EventScript_GiftNpc {
     waitfanfare
     waitmessage
     special(GymChallenge_AssignSignatureTM)
-    if (var(VAR_RESULT) == TRUE) {
-        playfanfare(MUS_OBTAIN_TMHM)
-        message(TestingGrounds_Exterior1_Text_ReceivedSignatureTM)
-        waitfanfare
-        waitmessage
-        msgbox(TestingGrounds_Exterior1_Text_ExplainSignatureTM)
-    } else {
-        msgbox(TestingGrounds_Exterior1_Text_SignatureTMNoRoom)
-    }
+    setflag(FLAG_TM_GROUP_STARTER)
+    playfanfare(MUS_OBTAIN_TMHM)
+    message(TestingGrounds_Exterior1_Text_ReceivedSignatureTM)
+    waitfanfare
+    waitmessage
+    msgbox(TestingGrounds_Exterior1_Text_ExplainSignatureTM)
     special(GymChallenge_BufferRankInfo)
     msgbox(TestingGrounds_Exterior1_Text_GiftExplainRules)
     release
@@ -278,15 +273,11 @@ script TestingGrounds_Exterior1_EventScript_RankExaminer {
             msgbox(TestingGrounds_Exterior1_Text_UpgradeConfirmWarn, MSGBOX_YESNO)
             if (var(VAR_RESULT) == YES) {
                 special(GymChallenge_UpgradeSignatureTM)
-                if (var(VAR_RESULT) == TRUE) {
-                    playfanfare(MUS_OBTAIN_TMHM)
-                    message(TestingGrounds_Exterior1_Text_UpgradeReceived)
-                    waitfanfare
-                    waitmessage
-                    msgbox(TestingGrounds_Exterior1_Text_UpgradeDone)
-                } else {
-                    msgbox(TestingGrounds_Exterior1_Text_SignatureTMNoRoom)
-                }
+                playfanfare(MUS_OBTAIN_TMHM)
+                message(TestingGrounds_Exterior1_Text_UpgradeReceived)
+                waitfanfare
+                waitmessage
+                msgbox(TestingGrounds_Exterior1_Text_UpgradeDone)
             }
         }
     }
@@ -332,21 +323,19 @@ text TestingGrounds_Exterior1_Text_GiftExplainRules {
 }
 
 text TestingGrounds_Exterior1_Text_ReceivedSignatureTM {
-    "{PLAYER} received {STR_VAR_2}!$"
+    "{STR_VAR_2} was added to\n"
+    "{PLAYER}'s TM MACHINE!$"
 }
 
 text TestingGrounds_Exterior1_Text_ExplainSignatureTM {
     "That TM teaches {STR_VAR_3} -\n"
     "your GYM's signature move!\p"
+    "Open the TM MACHINE from the menu\n"
+    "to teach your unlocked TMs.\p"
+    "Most cost GYM POINTS, but your\n"
+    "signature move is always free!\p"
     "One day, outsider POKéMON that\n"
     "learn it may fight by your side.$"
-}
-
-text TestingGrounds_Exterior1_Text_SignatureTMNoRoom {
-    "Oh! There's no room in your BAG\n"
-    "for the GYM's signature TM.\p"
-    "Come see me when you've made\n"
-    "space.$"
 }
 
 text TestingGrounds_Exterior1_Text_GiftPostGift {
@@ -633,12 +622,17 @@ text TestingGrounds_Exterior1_Text_UpgradeConfirmWarn {
 }
 
 text TestingGrounds_Exterior1_Text_UpgradeReceived {
-    "{PLAYER} received {STR_VAR_2}!$"
+    "{STR_VAR_2} was added to\n"
+    "{PLAYER}'s TM MACHINE!$"
 }
 
 text TestingGrounds_Exterior1_Text_UpgradeDone {
     "{STR_VAR_3} is now your GYM's\n"
-    "signature move!\p"
+    "signature move - teach it free\l"
+    "from your TM MACHINE!\p"
+    "The move you passed on was\n"
+    "unlocked too - it just costs\l"
+    "GYM POINTS.\p"
     "May it strike fear into every\n"
     "challenger!$"
 }

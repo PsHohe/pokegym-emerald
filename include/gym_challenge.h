@@ -8,6 +8,9 @@ bool32 GymChallenge_CopyChallengerText(u8 whichText, u16 trainerId);
 
 // Gym Points / rank state
 u32 GymChallenge_GetPoints(void);
+bool32 GymChallenge_TrySpendPoints(u32 amount);
+u32 GymChallenge_GetSignatureMove(void);
+bool32 GymChallenge_IsMoveUnlockedBySignature(u16 move);
 u32 GymChallenge_GetBarProgress(void);
 u32 GymChallenge_GetBarThreshold(void);
 u32 GymChallenge_GetRank(void);

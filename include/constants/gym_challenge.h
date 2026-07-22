@@ -37,4 +37,8 @@
 // Strong challengers pay out more Gym Points.
 #define GYM_STRONG_POINTS_MULTIPLIER 2
 
+// Teaching a TM from the TM Machine costs the TM item's price in Gym Points;
+// zero-priced TMs fall back to this. The current signature TM is free.
+#define GYM_TM_DEFAULT_COST 3000
+
 #endif // GUARD_CONSTANTS_GYM_CHALLENGE_H

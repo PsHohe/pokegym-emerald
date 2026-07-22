@@ -113,7 +113,7 @@ enum Language
 #define BAG_ITEMS_COUNT 30
 #define BAG_KEYITEMS_COUNT 30
 #define BAG_POKEBALLS_COUNT 16
-#define BAG_TMHM_COUNT 234 // 229 SV TMs + 5 HMs, so every machine can be held
+#define BAG_TMHM_COUNT 1 // TMs are not bag items; they live in the TM Machine (src/tm_machine.c). One dummy slot keeps the pocket wiring intact.
 #define BAG_BERRIES_COUNT 46
 
 // Number of facilities for Ranking Hall.
