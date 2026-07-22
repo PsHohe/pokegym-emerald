@@ -4014,6 +4014,11 @@ static void Cmd_getexp(void)
 
                     ApplyExperienceMultipliers(&gBattleStruct->battlerExpReward, *expMonId, gBattlerFainted);
 
+                    // Exp. Blocker key item: pause Exp. gain while still awarding EVs below.
+                    // Reward is zeroed here (not skipped) so the "gained 0 Exp. Points" message still shows.
+                    if (FlagGet(I_EXP_GAIN_PAUSE_FLAG))
+                        gBattleStruct->battlerExpReward = 0;
+
                     if (B_EXP_CAP_TYPE == EXP_CAP_HARD && gBattleStruct->battlerExpReward != 0)
                     {
                         enum GrowthRate growthRate = gSpeciesInfo[GetMonData(&gParties[B_TRAINER_PLAYER][*expMonId], MON_DATA_SPECIES)].growthRate;

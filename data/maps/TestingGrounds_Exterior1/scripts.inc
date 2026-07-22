@@ -590,6 +590,40 @@ TestingGrounds_Exterior1_EventScript_RankExaminer_23:
 	goto TestingGrounds_Exterior1_EventScript_RankExaminer_22
 
 
+TestingGrounds_Exterior1_EventScript_ExpBlockerNpc::
+# 317 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+	lock
+# 318 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+	faceplayer
+# 319 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+	checkitem ITEM_EXP_BLOCKER
+# 320 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+	compare VAR_RESULT, FALSE
+	goto_if_eq TestingGrounds_Exterior1_EventScript_ExpBlockerNpc_2
+# 324 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+	goto_if_set I_EXP_GAIN_PAUSE_FLAG, TestingGrounds_Exterior1_EventScript_ExpBlockerNpc_3
+# 327 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+	msgbox TestingGrounds_Exterior1_Text_ExpBlockerStateActive
+TestingGrounds_Exterior1_EventScript_ExpBlockerNpc_1:
+# 329 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+	release
+	end
+
+TestingGrounds_Exterior1_EventScript_ExpBlockerNpc_2:
+# 321 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+	msgbox TestingGrounds_Exterior1_Text_ExpBlockerIntro
+# 322 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+	giveitem ITEM_EXP_BLOCKER
+# 323 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+	msgbox TestingGrounds_Exterior1_Text_ExpBlockerExplain
+	goto TestingGrounds_Exterior1_EventScript_ExpBlockerNpc_1
+
+TestingGrounds_Exterior1_EventScript_ExpBlockerNpc_3:
+# 325 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+	msgbox TestingGrounds_Exterior1_Text_ExpBlockerStatePaused
+	goto TestingGrounds_Exterior1_EventScript_ExpBlockerNpc_1
+
+
 # 144 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 TestingGrounds_Exterior1_EventScript_GymAttendant_Movement_0:
 # 144 "data/maps/TestingGrounds_Exterior1/scripts.pory"
@@ -607,7 +641,7 @@ TestingGrounds_Exterior1_EventScript_GymAttendant_Movement_1:
 	step_end
 
 TestingGrounds_Exterior1_Text_GiftIntro::
-# 311 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 333 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "Ah, our new GYM LEADER!\p"
 	.string "A LEADER needs POKéMON of the GYM's\n"
 	.string "own type.\p"
@@ -615,12 +649,12 @@ TestingGrounds_Exterior1_Text_GiftIntro::
 	.string "partners!$"
 
 TestingGrounds_Exterior1_Text_GiftReceived::
-# 319 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 341 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "{PLAYER} received three\n"
 	.string "{STR_VAR_1}-type POKéMON!$"
 
 TestingGrounds_Exterior1_Text_GiftExplainRules::
-# 324 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 346 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "At rank {STR_VAR_1}, you defend with\n"
 	.string "{STR_VAR_3} POKéMON at level {STR_VAR_2}\l"
 	.string "or below.\p"
@@ -629,12 +663,12 @@ TestingGrounds_Exterior1_Text_GiftExplainRules::
 	.string "your GYM!$"
 
 TestingGrounds_Exterior1_Text_ReceivedSignatureTM::
-# 333 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 355 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "{STR_VAR_2} was added to\n"
 	.string "{PLAYER}'s TM MACHINE!$"
 
 TestingGrounds_Exterior1_Text_ExplainSignatureTM::
-# 338 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 360 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "That TM teaches {STR_VAR_3} -\n"
 	.string "your GYM's signature move!\p"
 	.string "Open the TM MACHINE from the menu\n"
@@ -645,80 +679,80 @@ TestingGrounds_Exterior1_Text_ExplainSignatureTM::
 	.string "learn it may fight by your side.$"
 
 TestingGrounds_Exterior1_Text_GiftPostGift::
-# 349 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 371 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "How are your POKéMON doing?\p"
 	.string "Defend your GYM well and it will\n"
 	.string "grow in rank!$"
 
 TestingGrounds_Exterior1_Text_GiftNoRoom::
-# 355 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 377 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "Oh! You don't have room for three\n"
 	.string "more POKéMON.\p"
 	.string "Come back when you've made space.$"
 
 TestingGrounds_Exterior1_Text_OpenGymPrompt::
-# 361 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 383 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "Welcome, GYM LEADER {PLAYER}!\p"
 	.string "Shall we open the GYM and accept\n"
 	.string "challenges?$"
 
 TestingGrounds_Exterior1_Text_ComeBackAnytime::
-# 367 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 389 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "Very well. Come back whenever\n"
 	.string "you're ready.$"
 
 TestingGrounds_Exterior1_Text_ChooseTeamSource::
-# 372 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 394 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "Who defends the GYM today?$"
 
 TestingGrounds_Exterior1_Text_SourceParty::
-# 376 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 398 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "CURRENT PARTY$"
 
 TestingGrounds_Exterior1_Text_SourceCancel::
-# 380 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 402 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "CANCEL$"
 
 TestingGrounds_Exterior1_Text_TeamUnavailable::
-# 384 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 406 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "Hmm… I can't find any of that\n"
 	.string "team's members.\p"
 	.string "Have they been released or\n"
 	.string "traded away?$"
 
 TestingGrounds_Exterior1_Text_PickDefenders::
-# 391 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 413 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "Now, pick the {STR_VAR_3} POKéMON\n"
 	.string "that will defend the GYM!$"
 
 TestingGrounds_Exterior1_Text_DoublesReminder::
-# 396 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 418 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "Remember: at your rank, GYM\n"
 	.string "battles are fought in pairs!\p"
 	.string "Your first two picks will lead\n"
 	.string "the battle together.$"
 
 TestingGrounds_Exterior1_Text_DoublesInfo::
-# 403 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 425 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "At your rank, all GYM battles\n"
 	.string "are DOUBLE BATTLES.$"
 
 TestingGrounds_Exterior1_Text_TeamWrongSize::
-# 408 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 430 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "Hmm… At rank {STR_VAR_1}, a LEADER\n"
 	.string "defends with up to {STR_VAR_3} POKéMON.\p"
 	.string "Please adjust your party and\n"
 	.string "come back.$"
 
 TestingGrounds_Exterior1_Text_TeamOverleveled::
-# 415 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 437 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "Hmm… At rank {STR_VAR_1}, your POKéMON\n"
 	.string "must be level {STR_VAR_2} or below.\p"
 	.string "Please adjust your party and\n"
 	.string "come back.$"
 
 TestingGrounds_Exterior1_Text_TeamWrongType::
-# 422 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 444 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "Hmm… This is a {STR_VAR_1}-type GYM.\p"
 	.string "Your team may only include POKéMON\n"
 	.string "of the GYM's type, or an outsider\l"
@@ -727,56 +761,56 @@ TestingGrounds_Exterior1_Text_TeamWrongType::
 	.string "come back.$"
 
 TestingGrounds_Exterior1_Text_GymIsOpen::
-# 431 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 453 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "The GYM is now open!\p"
 	.string "Three TRAINERS signed up to\n"
 	.string "challenge you today.\p"
 	.string "Here comes the first one!$"
 
 TestingGrounds_Exterior1_Text_StreakPhraseCalm::
-# 438 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 460 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "ATTENDANT: Mostly first-timers in\n"
 	.string "line today.\p"
 	.string "A calm day at the GYM, I'd say.$"
 
 TestingGrounds_Exterior1_Text_StreakPhraseStirring::
-# 444 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 466 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "ATTENDANT: A few familiar faces in\n"
 	.string "line today…\p"
 	.string "Some of them have clearly been\n"
 	.string "training for this.$"
 
 TestingGrounds_Exterior1_Text_StreakPhraseSpreading::
-# 451 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 473 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "ATTENDANT: Word of your streak is\n"
 	.string "spreading, LEADER.\p"
 	.string "Serious TRAINERS are starting to\n"
 	.string "line up outside.$"
 
 TestingGrounds_Exterior1_Text_StreakPhrasePeak::
-# 458 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 480 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "ATTENDANT: The line is full of\n"
 	.string "hardened TRAINERS today!\p"
 	.string "Every one of them has come to end\n"
 	.string "your streak. Stay sharp!$"
 
 TestingGrounds_Exterior1_Text_StrongChallengerWarning::
-# 465 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 487 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "ATTENDANT: Careful, LEADER…\p"
 	.string "This one has the look of a real\n"
 	.string "contender!$"
 
 TestingGrounds_Exterior1_Text_StreakInfo::
-# 471 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 493 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "Your current win streak:\n"
 	.string "{STR_VAR_1} in a row.$"
 
 TestingGrounds_Exterior1_Text_EarnedGymPoints::
-# 476 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 498 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "{PLAYER} earned {STR_VAR_1} GYM POINTS!$"
 
 TestingGrounds_Exterior1_Text_BarFilled::
-# 480 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 502 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "ATTENDANT: Incredible!\p"
 	.string "Your GYM's reputation has reached\n"
 	.string "its peak for this rank!\p"
@@ -784,37 +818,37 @@ TestingGrounds_Exterior1_Text_BarFilled::
 	.string "whenever you feel ready!$"
 
 TestingGrounds_Exterior1_Text_ExamAvailable::
-# 488 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 510 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "ATTENDANT: Remember, the RANK-UP\n"
 	.string "EXAM awaits whenever you're ready!$"
 
 TestingGrounds_Exterior1_Text_ChallengerDefeated::
-# 493 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 515 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "{STR_VAR_1}: Aww… You really are\n"
 	.string "the GYM LEADER!\p"
 	.string "I'll train harder and challenge\n"
 	.string "you again!$"
 
 TestingGrounds_Exterior1_Text_NextChallengerArrived::
-# 500 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 522 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "ATTENDANT: Well defended!\p"
 	.string "Your POKéMON have been healed.\n"
 	.string "The next challenger has arrived!$"
 
 TestingGrounds_Exterior1_Text_LeaderLost::
-# 506 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 528 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "{STR_VAR_1}: I… I won?!\p"
 	.string "I beat a GYM LEADER! Wait till\n"
 	.string "everyone hears about this!$"
 
 TestingGrounds_Exterior1_Text_GymClosedAfterLoss::
-# 512 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 534 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "ATTENDANT: Oh no…\p"
 	.string "We'll close the GYM for today.\n"
 	.string "Rest up and try again tomorrow!$"
 
 TestingGrounds_Exterior1_Text_GymDayComplete::
-# 518 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 540 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "ATTENDANT: That was the last\n"
 	.string "challenger for today!\p"
 	.string "You defended your GYM perfectly,\n"
@@ -823,116 +857,116 @@ TestingGrounds_Exterior1_Text_GymDayComplete::
 	.string "will surely rise!$"
 
 TestingGrounds_Exterior1_Text_TeamKeeperIntro::
-# 527 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 549 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "Hello, LEADER! I keep your\n"
 	.string "registered GYM TEAMS.\p"
 	.string "A team remembers its members even\n"
 	.string "if you move them around the PC.$"
 
 TestingGrounds_Exterior1_Text_ChooseTeam::
-# 534 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 556 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "Which team shall we look at?$"
 
 TestingGrounds_Exterior1_Text_Team1::
-# 538 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 560 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "TEAM 1$"
 
 TestingGrounds_Exterior1_Text_Team2::
-# 542 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 564 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "TEAM 2$"
 
 TestingGrounds_Exterior1_Text_Team3::
-# 546 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 568 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "TEAM 3$"
 
 TestingGrounds_Exterior1_Text_Team4::
-# 550 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 572 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "TEAM 4$"
 
 TestingGrounds_Exterior1_Text_Team5::
-# 554 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 576 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "TEAM 5$"
 
 TestingGrounds_Exterior1_Text_TeamMenuExit::
-# 558 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 580 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "EXIT$"
 
 TestingGrounds_Exterior1_Text_TeamEmpty::
-# 562 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 584 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "TEAM {STR_VAR_2} is empty.$"
 
 TestingGrounds_Exterior1_Text_TeamMembers::
-# 566 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 588 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "TEAM {STR_VAR_2}:\p"
 	.string "{STR_VAR_1}$"
 
 TestingGrounds_Exterior1_Text_TeamActionRegister::
-# 571 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 593 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "REGISTER PARTY$"
 
 TestingGrounds_Exterior1_Text_TeamActionClear::
-# 575 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 597 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "CLEAR TEAM$"
 
 TestingGrounds_Exterior1_Text_TeamActionBack::
-# 579 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 601 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "BACK$"
 
 TestingGrounds_Exterior1_Text_TeamRegistered::
-# 583 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 605 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "Done! Your current party is now\n"
 	.string "TEAM {STR_VAR_2}.$"
 
 TestingGrounds_Exterior1_Text_TeamCleared::
-# 588 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 610 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "TEAM {STR_VAR_2} has been cleared.$"
 
 TestingGrounds_Exterior1_Text_TeamKeeperBye::
-# 592 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 614 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "Come back anytime, LEADER!$"
 
 TestingGrounds_Exterior1_Text_RankInfo::
-# 596 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 618 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "EXAMINER: You preside at rank\n"
 	.string "{STR_VAR_1}, LEADER.\p"
 	.string "Your GYM team may have {STR_VAR_3}\n"
 	.string "POKéMON of level {STR_VAR_2} or below.$"
 
 TestingGrounds_Exterior1_Text_SignatureMoveInfo::
-# 603 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 625 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "Your GYM's signature move is\n"
 	.string "{STR_VAR_1}.$"
 
 TestingGrounds_Exterior1_Text_OffTypeInfo::
-# 608 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 630 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "At your rank, one team member may\n"
 	.string "be an outsider type…\p"
 	.string "…as long as it knows {STR_VAR_1},\n"
 	.string "your signature move!$"
 
 TestingGrounds_Exterior1_Text_GymProgress::
-# 615 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 637 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "You lead a {STR_VAR_1}-type GYM.\p"
 	.string "Reputation this rank:\n"
 	.string "{STR_VAR_2} of {STR_VAR_3} points.$"
 
 TestingGrounds_Exterior1_Text_UpgradeOffer::
-# 621 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 643 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "Ah, one more thing, LEADER!\p"
 	.string "A GYM of your rank may adopt a\n"
 	.string "stronger signature move!$"
 
 TestingGrounds_Exterior1_Text_UpgradeChoosePrompt::
-# 627 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 649 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "Which move shall represent\n"
 	.string "your GYM?$"
 
 TestingGrounds_Exterior1_Text_UpgradeLater::
-# 632 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 654 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "LATER$"
 
 TestingGrounds_Exterior1_Text_UpgradeConfirmWarn::
-# 636 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 658 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "Once you adopt the new move, only\n"
 	.string "it will count as your signature.\p"
 	.string "Outsiders that know only the old\n"
@@ -940,12 +974,12 @@ TestingGrounds_Exterior1_Text_UpgradeConfirmWarn::
 	.string "Proceed?$"
 
 TestingGrounds_Exterior1_Text_UpgradeReceived::
-# 644 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 666 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "{STR_VAR_2} was added to\n"
 	.string "{PLAYER}'s TM MACHINE!$"
 
 TestingGrounds_Exterior1_Text_UpgradeDone::
-# 649 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 671 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "{STR_VAR_3} is now your GYM's\n"
 	.string "signature move - teach it free\l"
 	.string "from your TM MACHINE!\p"
@@ -956,23 +990,48 @@ TestingGrounds_Exterior1_Text_UpgradeDone::
 	.string "challenger!$"
 
 TestingGrounds_Exterior1_Text_ExamUnlockedNote::
-# 660 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 682 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "Your reputation is at its peak!\n"
 	.string "The RANK-UP EXAM awaits you.$"
 
 TestingGrounds_Exterior1_Text_MaxRank::
-# 665 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 687 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "You stand at the very top,\n"
 	.string "LEADER. There is no higher rank!$"
 
 TestingGrounds_Exterior1_Text_TestRankUpPrompt::
-# 670 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 692 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "(TEST) Advance to the next rank\n"
 	.string "right now?$"
 
 TestingGrounds_Exterior1_Text_RankedUp::
-# 675 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+# 697 "data/maps/TestingGrounds_Exterior1/scripts.pory"
 	.string "Congratulations, LEADER!\p"
 	.string "You now preside at rank {STR_VAR_1}!\p"
 	.string "New rules: {STR_VAR_3} POKéMON of\n"
 	.string "level {STR_VAR_2} or below.$"
+
+TestingGrounds_Exterior1_Text_ExpBlockerIntro::
+# 704 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+	.string "Testing EXP curves, are we?\p"
+	.string "Here, take this EXP. BLOCKER.$"
+
+TestingGrounds_Exterior1_Text_ExpBlockerExplain::
+# 709 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+	.string "Use it from the KEY ITEMS pocket to\n"
+	.string "pause or resume EXP for your whole\l"
+	.string "party.\p"
+	.string "Your POKéMON keep earning EVs even\n"
+	.string "while EXP is paused.$"
+
+TestingGrounds_Exterior1_Text_ExpBlockerStatePaused::
+# 717 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+	.string "EXP gain is currently PAUSED.\p"
+	.string "Use the EXP. BLOCKER again to resume\n"
+	.string "it. EVs are still being earned.$"
+
+TestingGrounds_Exterior1_Text_ExpBlockerStateActive::
+# 723 "data/maps/TestingGrounds_Exterior1/scripts.pory"
+	.string "EXP gain is currently ACTIVE.\p"
+	.string "Use the EXP. BLOCKER to pause it\n"
+	.string "whenever you like.$"

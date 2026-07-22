@@ -9702,6 +9702,23 @@ const struct ItemInfo gItemsInfo[] =
         .iconPalette = gItemIconPalette_ExpShare,
     },
 
+    [ITEM_EXP_BLOCKER] =
+    {
+        .name = ITEM_NAME("Exp. Blocker"),
+        .price = 0,
+        .importance = 1,
+        .description = COMPOUND_STRING(
+            "Toggles Exp. gain\n"
+            "for your team. EVs\n"
+            "are still earned."),
+        .pocket = POCKET_KEY_ITEMS,
+        .sortType = ITEM_TYPE_HELD_ITEM,
+        .type = ITEM_USE_FIELD,
+        .fieldUseFunc = ItemUseOutOfBattle_ExpBlocker,
+        .iconPic = gItemIcon_ExpShare,
+        .iconPalette = gItemIconPalette_ExpShare,
+    },
+
     [ITEM_QUICK_CLAW] =
     {
         .name = ITEM_NAME("Quick Claw"),

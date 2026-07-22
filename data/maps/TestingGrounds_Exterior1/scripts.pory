@@ -308,6 +308,28 @@ script TestingGrounds_Exterior1_EventScript_RankExaminer {
     end
 }
 
+// ---------------------------------------------------------------------------
+// Exp. Blocker vendor: hands out the Exp. Blocker key item (test map only).
+// The item toggles party Exp. gain on/off; EVs are still earned either way.
+// If the player already has it, report the current pause state instead.
+// ---------------------------------------------------------------------------
+script TestingGrounds_Exterior1_EventScript_ExpBlockerNpc {
+    lock
+    faceplayer
+    checkitem(ITEM_EXP_BLOCKER)
+    if (var(VAR_RESULT) == FALSE) {
+        msgbox(TestingGrounds_Exterior1_Text_ExpBlockerIntro)
+        giveitem(ITEM_EXP_BLOCKER)
+        msgbox(TestingGrounds_Exterior1_Text_ExpBlockerExplain)
+    } elif (flag(I_EXP_GAIN_PAUSE_FLAG)) {
+        msgbox(TestingGrounds_Exterior1_Text_ExpBlockerStatePaused)
+    } else {
+        msgbox(TestingGrounds_Exterior1_Text_ExpBlockerStateActive)
+    }
+    release
+    end
+}
+
 text TestingGrounds_Exterior1_Text_GiftIntro {
     "Ah, our new GYM LEADER!\p"
     "A LEADER needs POKéMON of the GYM's\n"
@@ -677,4 +699,29 @@ text TestingGrounds_Exterior1_Text_RankedUp {
     "You now preside at rank {STR_VAR_1}!\p"
     "New rules: {STR_VAR_3} POKéMON of\n"
     "level {STR_VAR_2} or below.$"
+}
+
+text TestingGrounds_Exterior1_Text_ExpBlockerIntro {
+    "Testing EXP curves, are we?\p"
+    "Here, take this EXP. BLOCKER.$"
+}
+
+text TestingGrounds_Exterior1_Text_ExpBlockerExplain {
+    "Use it from the KEY ITEMS pocket to\n"
+    "pause or resume EXP for your whole\l"
+    "party.\p"
+    "Your POKéMON keep earning EVs even\n"
+    "while EXP is paused.$"
+}
+
+text TestingGrounds_Exterior1_Text_ExpBlockerStatePaused {
+    "EXP gain is currently PAUSED.\p"
+    "Use the EXP. BLOCKER again to resume\n"
+    "it. EVs are still being earned.$"
+}
+
+text TestingGrounds_Exterior1_Text_ExpBlockerStateActive {
+    "EXP gain is currently ACTIVE.\p"
+    "Use the EXP. BLOCKER to pause it\n"
+    "whenever you like.$"
 }

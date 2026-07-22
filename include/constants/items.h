@@ -1181,6 +1181,9 @@ enum __attribute__((packed)) Item
     ITEM_TATSUGIRINITE = 1001,
     ITEM_GLIMMORANITE = 1002,
 
+    // Custom key items
+    ITEM_EXP_BLOCKER = 1003, // Toggles Exp. gain for the whole party (EVs still gained)
+
     ITEMS_COUNT,
     ITEM_FIELD_ARROW = ITEMS_COUNT,
 };

@@ -272,6 +272,28 @@ void ItemUseOutOfBattle_ExpShare(u8 taskId)
 #endif
 }
 
+void ItemUseOutOfBattle_ExpBlocker(u8 taskId)
+{
+    const u8 *msg;
+
+    if (FlagGet(I_EXP_GAIN_PAUSE_FLAG))
+    {
+        PlaySE(SE_EXP_MAX); // resuming Exp. gain
+        msg = gText_ExpBlockerOff;
+    }
+    else
+    {
+        PlaySE(SE_PC_OFF); // pausing Exp. gain
+        msg = gText_ExpBlockerOn;
+    }
+    FlagToggle(I_EXP_GAIN_PAUSE_FLAG);
+
+    if (!gTasks[taskId].data[2]) // to account for pressing select in the overworld
+        DisplayItemMessageOnField(taskId, msg, Task_CloseCantUseKeyItemMessage);
+    else
+        DisplayItemMessage(taskId, FONT_NORMAL, msg, CloseItemMessage);
+}
+
 void ItemUseOutOfBattle_Bike(u8 taskId)
 {
     s16 *data = gTasks[taskId].data;
