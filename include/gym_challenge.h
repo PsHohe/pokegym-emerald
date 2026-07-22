@@ -18,6 +18,7 @@ u32 GymChallenge_GetGymType(void);
 u32 GymChallenge_GetLevelCap(void);
 u32 GymChallenge_GetBringCount(void);
 u32 GymChallenge_GetOffTypeSlots(void);
+void GymChallenge_IsDoubles(void);
 
 // Script specials
 void GymChallenge_Begin(void);

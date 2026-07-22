@@ -90,6 +90,10 @@ script TestingGrounds_Exterior1_EventScript_GymAttendant {
     }
     special(GymChallenge_BufferRankInfo)
     msgbox(TestingGrounds_Exterior1_Text_PickDefenders)
+    special(GymChallenge_IsDoubles)
+    if (var(VAR_RESULT) == TRUE) {
+        msgbox(TestingGrounds_Exterior1_Text_DoublesReminder)
+    }
     fadescreen(FADE_TO_BLACK)
     special(GymChallenge_ChooseGymParty)
     if (!var(VAR_RESULT)) {
@@ -249,6 +253,10 @@ script TestingGrounds_Exterior1_EventScript_RankExaminer {
     faceplayer
     special(GymChallenge_BufferRankInfo)
     msgbox(TestingGrounds_Exterior1_Text_RankInfo)
+    special(GymChallenge_IsDoubles)
+    if (var(VAR_RESULT) == TRUE) {
+        msgbox(TestingGrounds_Exterior1_Text_DoublesInfo)
+    }
     special(GymChallenge_BufferSignatureMove)
     msgbox(TestingGrounds_Exterior1_Text_SignatureMoveInfo)
     if (var(VAR_GYM_RANK) >= 3) {
@@ -383,6 +391,18 @@ text TestingGrounds_Exterior1_Text_TeamUnavailable {
 text TestingGrounds_Exterior1_Text_PickDefenders {
     "Now, pick the {STR_VAR_3} POKéMON\n"
     "that will defend the GYM!$"
+}
+
+text TestingGrounds_Exterior1_Text_DoublesReminder {
+    "Remember: at your rank, GYM\n"
+    "battles are fought in pairs!\p"
+    "Your first two picks will lead\n"
+    "the battle together.$"
+}
+
+text TestingGrounds_Exterior1_Text_DoublesInfo {
+    "At your rank, all GYM battles\n"
+    "are DOUBLE BATTLES.$"
 }
 
 text TestingGrounds_Exterior1_Text_TeamWrongSize {

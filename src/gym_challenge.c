@@ -40,6 +40,7 @@
 // Per-rank gym rules. Rank is 1-based (VAR_GYM_RANK); index with rank - 1.
 // - offTypeSlots: how many brought mons may be off-type, provided they know
 //   the gym's signature move (gSaveBlock3Ptr->gym.signatureMove).
+// - doubles: from rank 4 on, gym battles are double battles.
 // - barThreshold: Gym Points earned this rank to unlock the rank-up exam.
 //   Tuned to ~20 average wins at the rank's level cap; adjust with playtests.
 struct GymRankInfo
@@ -47,19 +48,20 @@ struct GymRankInfo
     u8 levelCap;
     u8 bringCount;
     u8 offTypeSlots;
+    bool8 doubles;
     u16 barThreshold;
 };
 
 static const struct GymRankInfo sGymRanks[GYM_RANK_COUNT] =
 {
-    [0] = { .levelCap = 15, .bringCount = 2, .offTypeSlots = 0, .barThreshold = 4800 },
-    [1] = { .levelCap = 22, .bringCount = 3, .offTypeSlots = 0, .barThreshold = 7000 },
-    [2] = { .levelCap = 29, .bringCount = 3, .offTypeSlots = 1, .barThreshold = 9500 },
-    [3] = { .levelCap = 36, .bringCount = 4, .offTypeSlots = 1, .barThreshold = 11500 },
-    [4] = { .levelCap = 43, .bringCount = 4, .offTypeSlots = 1, .barThreshold = 14000 },
-    [5] = { .levelCap = 50, .bringCount = 4, .offTypeSlots = 1, .barThreshold = 16000 },
-    [6] = { .levelCap = 58, .bringCount = 4, .offTypeSlots = 1, .barThreshold = 18500 },
-    [7] = { .levelCap = 65, .bringCount = 4, .offTypeSlots = 1, .barThreshold = 21000 },
+    [0] = { .levelCap = 15, .bringCount = 2, .offTypeSlots = 0, .doubles = FALSE, .barThreshold = 4800 },
+    [1] = { .levelCap = 22, .bringCount = 3, .offTypeSlots = 0, .doubles = FALSE, .barThreshold = 7000 },
+    [2] = { .levelCap = 29, .bringCount = 3, .offTypeSlots = 1, .doubles = FALSE, .barThreshold = 9500 },
+    [3] = { .levelCap = 36, .bringCount = 4, .offTypeSlots = 1, .doubles = TRUE,  .barThreshold = 11500 },
+    [4] = { .levelCap = 43, .bringCount = 4, .offTypeSlots = 1, .doubles = TRUE,  .barThreshold = 14000 },
+    [5] = { .levelCap = 50, .bringCount = 4, .offTypeSlots = 1, .doubles = TRUE,  .barThreshold = 16000 },
+    [6] = { .levelCap = 58, .bringCount = 4, .offTypeSlots = 1, .doubles = TRUE,  .barThreshold = 18500 },
+    [7] = { .levelCap = 65, .bringCount = 4, .offTypeSlots = 1, .doubles = TRUE,  .barThreshold = 21000 },
 };
 
 static const struct GymRankInfo *GetRankInfo(void)
@@ -90,7 +92,11 @@ struct GymChallengerSpeech
 #include "data/gym_challengers/rank1_common.h"
 #include "data/gym_challengers/rank1_strong.h"
 #include "data/gym_challengers/rank2_common.h"
+#include "data/gym_challengers/rank2_strong.h"
 #include "data/gym_challengers/rank3_common.h"
+#include "data/gym_challengers/rank3_strong.h"
+#include "data/gym_challengers/rank4_common.h"
+#include "data/gym_challengers/rank4_strong.h"
 
 // A challenger roster: the trainer table (frontier-compatible), the mon pool
 // its monSets index into, and the matching in-battle speech.
@@ -134,7 +140,13 @@ static const struct GymChallengerSet sChallengerSets[GYM_RANK_COUNT][GYM_TIER_CO
             .monPool = sRank2CommonMons,
             .trainerCount = ARRAY_COUNT(sRank2CommonChallengers),
         },
-        // Strong falls back to the rank 1 strong roster (level-scaled).
+        [GYM_TIER_STRONG] =
+        {
+            .trainers = sRank2StrongChallengers,
+            .speech = sRank2StrongSpeech,
+            .monPool = sRank2StrongMons,
+            .trainerCount = ARRAY_COUNT(sRank2StrongChallengers),
+        },
     },
     [2] =
     {
@@ -144,6 +156,32 @@ static const struct GymChallengerSet sChallengerSets[GYM_RANK_COUNT][GYM_TIER_CO
             .speech = sRank3CommonSpeech,
             .monPool = sRank3CommonMons,
             .trainerCount = ARRAY_COUNT(sRank3CommonChallengers),
+        },
+        [GYM_TIER_STRONG] =
+        {
+            .trainers = sRank3StrongChallengers,
+            .speech = sRank3StrongSpeech,
+            .monPool = sRank3StrongMons,
+            .trainerCount = ARRAY_COUNT(sRank3StrongChallengers),
+        },
+    },
+    // Rank 4+ battles are doubles; these rosters (and their fallbacks for
+    // ranks 5-8) avoid ally-hitting spread moves.
+    [3] =
+    {
+        [GYM_TIER_COMMON] =
+        {
+            .trainers = sRank4CommonChallengers,
+            .speech = sRank4CommonSpeech,
+            .monPool = sRank4CommonMons,
+            .trainerCount = ARRAY_COUNT(sRank4CommonChallengers),
+        },
+        [GYM_TIER_STRONG] =
+        {
+            .trainers = sRank4StrongChallengers,
+            .speech = sRank4StrongSpeech,
+            .monPool = sRank4StrongMons,
+            .trainerCount = ARRAY_COUNT(sRank4StrongChallengers),
         },
     },
 };
@@ -156,22 +194,22 @@ static EWRAM_DATA u8 sCurrentTier = GYM_TIER_COMMON;
 static void Task_StartGymBattleAfterTransition(u8 taskId);
 static void HandleGymBattleEnd(void);
 
-// The roster the current challenger belongs to: the current rank and tier,
-// falling back to rank 1 while higher ranks have no authored content.
+// The roster the current challenger belongs to: the current rank and tier.
+// Ranks without authored content fall back to the nearest lower authored
+// rank (levels still scale with the real rank's cap), so higher gyms always
+// face the strongest available roster.
 static const struct GymChallengerSet *GetChallengerSet(void)
 {
     u32 rank = VarGet(VAR_GYM_RANK);
-    const struct GymChallengerSet *set;
 
     if (rank < GYM_RANK_MIN)
         rank = GYM_RANK_MIN;
     else if (rank > GYM_RANK_MAX)
         rank = GYM_RANK_MAX;
 
-    set = &sChallengerSets[rank - 1][sCurrentTier];
-    if (set->trainers == NULL)
-        set = &sChallengerSets[0][sCurrentTier];
-    return set;
+    while (rank > GYM_RANK_MIN && sChallengerSets[rank - 1][sCurrentTier].trainers == NULL)
+        rank--;
+    return &sChallengerSets[rank - 1][sCurrentTier];
 }
 
 // Called from CopyFrontierTrainerText. While a gym challenge is active the
@@ -431,13 +469,16 @@ static void FillStrongChallengerParty(u32 monCount)
 // Starts the battle against the current challenger. Must be followed by
 // waitstate. Uses the Battle Tower battle type so the pre-generated party
 // is kept, no EXP/money is handed out and losing returns to the script
-// instead of whiting out.
+// instead of whiting out. From rank 4 on, gym battles are doubles (the same
+// flag the frontier's doubles mode uses).
 void GymChallenge_StartBattle(void)
 {
     InitTrainerBattleParameter();
     TRAINER_BATTLE_PARAM.opponentA = sCurrentChallenger;
     gBattleScripting.specialTrainerBattleType = FACILITY_BATTLE_TOWER;
     gBattleTypeFlags = BATTLE_TYPE_TRAINER | BATTLE_TYPE_BATTLE_TOWER;
+    if (GetRankInfo()->doubles)
+        gBattleTypeFlags |= BATTLE_TYPE_DOUBLE;
     if (sCurrentTier == GYM_TIER_STRONG)
         FillStrongChallengerParty(GetRankInfo()->bringCount);
     else
@@ -494,6 +535,13 @@ u32 GymChallenge_GetBringCount(void)
 u32 GymChallenge_GetOffTypeSlots(void)
 {
     return GetRankInfo()->offTypeSlots;
+}
+
+// Script special: VAR_RESULT receives whether gym battles are doubles at
+// the current rank.
+void GymChallenge_IsDoubles(void)
+{
+    gSpecialVar_Result = GetRankInfo()->doubles;
 }
 
 // Advances to the next rank (called by the rank-up exam script). Resets the

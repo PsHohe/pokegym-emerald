@@ -644,6 +644,7 @@ gSpecials::
 	def_special GymChallenge_StartBattle, waitstate=1
 	def_special GymChallenge_End
 	def_special GymChallenge_AwardVictoryPoints
+	def_special GymChallenge_IsDoubles
 	def_special GymChallenge_RecordLoss
 	def_special GymChallenge_GetStreakTier
 	def_special GymChallenge_BufferStreak
