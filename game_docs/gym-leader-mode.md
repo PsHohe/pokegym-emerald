@@ -305,9 +305,19 @@ Recommended next steps, roughly in order:
    draws from the top of the ranking with a small skip chance for variety.
    See `spike-challenger-counterpick.md` for the original exploration.
 7. **Content scale-out.** ✅ Structure done: challenger tables live under
-   `src/data/gym_challengers/` (rank 1 common + strong authored). Remaining
-   content work: rosters for ranks 2–8 (both tiers) and the rank-5
-   signature-TM upgrade choice.
+   `src/data/gym_challengers/` (authored: rank 1 common + strong, rank 2–3
+   common; everything else falls back to rank 1, level-scaled). Challenger
+   overworld intro lines live in the roster data (`introText`, shown via
+   `GymChallenge_BufferChallengerIntro` + `msgbox gStringVar4`), so new
+   rosters need no script changes. Remaining content: common rosters for
+   ranks 4–8 and strong rosters for ranks 2–8.
+8. **Rank-5 signature TM upgrade.** ✅ Done: at rank 5+ the examiner offers
+   a one-time choice between two tier-2 moves for the gym's type
+   (`sGymSignatureUpgrades`), shown by name in a `dynmultichoice`. Only the
+   new move counts afterwards (the dialogue warns that outsiders knowing
+   only the old move stop qualifying). TM57–77 were added to `FOREACH_TM`
+   to cover the upgrade moves (Close Combat, Stone Edge, Scald, Play
+   Rough, etc.).
 
 ### Known PoC caveats
 

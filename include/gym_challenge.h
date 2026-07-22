@@ -30,6 +30,10 @@ void GymChallenge_RankUp(void);
 void GymChallenge_GiveGymStarters(void);
 void GymChallenge_AssignSignatureTM(void);
 void GymChallenge_BufferSignatureMove(void);
+void GymChallenge_CanUpgradeSignatureTM(void);
+void GymChallenge_BufferSignatureUpgradeChoices(void);
+void GymChallenge_UpgradeSignatureTM(void);
+void GymChallenge_BufferChallengerIntro(void);
 void GymChallenge_BufferRankInfo(void);
 void GymChallenge_BufferGymProgress(void);
 

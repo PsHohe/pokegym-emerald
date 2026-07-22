@@ -144,21 +144,25 @@ static const struct BattleFrontierTrainer sRank1CommonChallengers[] =
 static const struct GymChallengerSpeech sRank1CommonSpeech[] =
 {
     {
+        .introText = COMPOUND_STRING("{STR_VAR_1}: So you're the new GYM\nLEADER?\pMy POOCHYENA and I are gonna take\nyour badge, mister!"),
         .beforeText = COMPOUND_STRING("Here goes nothing!"),
         .playerLostText = COMPOUND_STRING("I did it! I beat a real\nGYM LEADER!"),
         .playerWonText = COMPOUND_STRING("Aww! You're the real deal,\nGYM LEADER…"),
     },
     {
+        .introText = COMPOUND_STRING("{STR_VAR_1}: I found sooo many BUG\nPOKéMON in the woods!\pLet's see them squish your\nPOKéMON!"),
         .beforeText = COMPOUND_STRING("Go, my BUG POKéMON!"),
         .playerLostText = COMPOUND_STRING("BUG POKéMON are the\nstrongest after all!"),
         .playerWonText = COMPOUND_STRING("Squished… My BUGS did\ntheir best…"),
     },
     {
+        .introText = COMPOUND_STRING("{STR_VAR_1}: My FIGHTING-type\nPOKéMON train every day!\pShow me what a real GYM LEADER\ncan do. Prepare yourself!"),
         .beforeText = COMPOUND_STRING("Show me your spirit!"),
         .playerLostText = COMPOUND_STRING("FIGHTING spirit wins\nbattles! Remember that!"),
         .playerWonText = COMPOUND_STRING("Even with all my training…\nYou're strong, LEADER."),
     },
     {
+        .introText = COMPOUND_STRING("{STR_VAR_1}: I studied all about\ntype matchups in school!\pToday's lesson: beating a GYM\nLEADER!"),
         .beforeText = COMPOUND_STRING("Time for a pop quiz!"),
         .playerLostText = COMPOUND_STRING("Just like the textbook\nsaid it would go!"),
         .playerWonText = COMPOUND_STRING("Back to studying…\nI'll ace the rematch!"),

@@ -147,20 +147,10 @@ script TestingGrounds_Exterior1_EventScript_GymAttendant {
         if (var(VAR_0x8006) == GYM_TIER_STRONG) {
             msgbox(TestingGrounds_Exterior1_Text_StrongChallengerWarning)
             closemessage
-            switch (var(VAR_RESULT)) {
-                case 0: msgbox(TestingGrounds_Exterior1_Text_IntroVito)
-                case 1: msgbox(TestingGrounds_Exterior1_Text_IntroNadia)
-                case 2: msgbox(TestingGrounds_Exterior1_Text_IntroIvan)
-                case 3: msgbox(TestingGrounds_Exterior1_Text_IntroMara)
-            }
-        } else {
-            switch (var(VAR_RESULT)) {
-                case 0: msgbox(TestingGrounds_Exterior1_Text_IntroBenny)
-                case 1: msgbox(TestingGrounds_Exterior1_Text_IntroDino)
-                case 2: msgbox(TestingGrounds_Exterior1_Text_IntroRika)
-                case 3: msgbox(TestingGrounds_Exterior1_Text_IntroTommy)
-            }
         }
+        // The challenger's intro line comes from its roster data.
+        special(GymChallenge_BufferChallengerIntro)
+        msgbox(gStringVar4)
         special(HealPlayerParty)
         special(GymChallenge_StartBattle)
         specialvar(VAR_RESULT, GetBattleOutcome)
@@ -273,6 +263,33 @@ script TestingGrounds_Exterior1_EventScript_RankExaminer {
     msgbox(TestingGrounds_Exterior1_Text_GymProgress)
     special(GymChallenge_BufferStreak)
     msgbox(TestingGrounds_Exterior1_Text_StreakInfo)
+    special(GymChallenge_CanUpgradeSignatureTM)
+    if (var(VAR_RESULT) == TRUE) {
+        msgbox(TestingGrounds_Exterior1_Text_UpgradeOffer)
+        message(TestingGrounds_Exterior1_Text_UpgradeChoosePrompt)
+        waitmessage
+        special(GymChallenge_BufferSignatureUpgradeChoices)
+        dynmultichoice(0, 0, FALSE, 3, 0, DYN_MULTICHOICE_CB_NONE,
+            gStringVar1,
+            gStringVar2,
+            TestingGrounds_Exterior1_Text_UpgradeLater)
+        if (var(VAR_RESULT) == 0 || var(VAR_RESULT) == 1) {
+            copyvar(VAR_0x8004, VAR_RESULT)
+            msgbox(TestingGrounds_Exterior1_Text_UpgradeConfirmWarn, MSGBOX_YESNO)
+            if (var(VAR_RESULT) == YES) {
+                special(GymChallenge_UpgradeSignatureTM)
+                if (var(VAR_RESULT) == TRUE) {
+                    playfanfare(MUS_OBTAIN_TMHM)
+                    message(TestingGrounds_Exterior1_Text_UpgradeReceived)
+                    waitfanfare
+                    waitmessage
+                    msgbox(TestingGrounds_Exterior1_Text_UpgradeDone)
+                } else {
+                    msgbox(TestingGrounds_Exterior1_Text_SignatureTMNoRoom)
+                }
+            }
+        }
+    }
     special(GymChallenge_IsRankUpUnlocked)
     if (var(VAR_RESULT) == TRUE) {
         msgbox(TestingGrounds_Exterior1_Text_ExamUnlockedNote)
@@ -447,62 +464,6 @@ text TestingGrounds_Exterior1_Text_StreakInfo {
     "{STR_VAR_1} in a row.$"
 }
 
-text TestingGrounds_Exterior1_Text_IntroBenny {
-    "{STR_VAR_1}: So you're the new GYM\n"
-    "LEADER?\p"
-    "My POOCHYENA and I are gonna take\n"
-    "your badge, mister!$"
-}
-
-text TestingGrounds_Exterior1_Text_IntroDino {
-    "{STR_VAR_1}: I found sooo many BUG\n"
-    "POKéMON in the woods!\p"
-    "Let's see them squish your\n"
-    "POKéMON!$"
-}
-
-text TestingGrounds_Exterior1_Text_IntroRika {
-    "{STR_VAR_1}: My FIGHTING-type\n"
-    "POKéMON train every day!\p"
-    "Show me what a real GYM LEADER\n"
-    "can do. Prepare yourself!$"
-}
-
-text TestingGrounds_Exterior1_Text_IntroTommy {
-    "{STR_VAR_1}: I studied all about\n"
-    "type matchups in school!\p"
-    "Today's lesson: beating a GYM\n"
-    "LEADER!$"
-}
-
-text TestingGrounds_Exterior1_Text_IntroVito {
-    "{STR_VAR_1}: I've watched every one\n"
-    "of your GYM battles, LEADER.\p"
-    "My team was built to take\n"
-    "yours apart!$"
-}
-
-text TestingGrounds_Exterior1_Text_IntroNadia {
-    "{STR_VAR_1}: A win here would make\n"
-    "my career.\p"
-    "I picked my POKéMON just\n"
-    "for your GYM. Let's go!$"
-}
-
-text TestingGrounds_Exterior1_Text_IntroIvan {
-    "{STR_VAR_1}: I foresaw your every\n"
-    "move before I walked in.\p"
-    "This battle is already\n"
-    "decided!$"
-}
-
-text TestingGrounds_Exterior1_Text_IntroMara {
-    "{STR_VAR_1}: Hee hee… Your GYM has\n"
-    "such a lovely aura…\p"
-    "Let's see if it survives\n"
-    "my little curse.$"
-}
-
 text TestingGrounds_Exterior1_Text_EarnedGymPoints {
     "{PLAYER} earned {STR_VAR_1} GYM POINTS!$"
 }
@@ -646,6 +607,40 @@ text TestingGrounds_Exterior1_Text_GymProgress {
     "You lead a {STR_VAR_1}-type GYM.\p"
     "Reputation this rank:\n"
     "{STR_VAR_2} of {STR_VAR_3} points.$"
+}
+
+text TestingGrounds_Exterior1_Text_UpgradeOffer {
+    "Ah, one more thing, LEADER!\p"
+    "A GYM of your rank may adopt a\n"
+    "stronger signature move!$"
+}
+
+text TestingGrounds_Exterior1_Text_UpgradeChoosePrompt {
+    "Which move shall represent\n"
+    "your GYM?$"
+}
+
+text TestingGrounds_Exterior1_Text_UpgradeLater {
+    "LATER$"
+}
+
+text TestingGrounds_Exterior1_Text_UpgradeConfirmWarn {
+    "Once you adopt the new move, only\n"
+    "it will count as your signature.\p"
+    "Outsiders that know only the old\n"
+    "move will no longer qualify.\p"
+    "Proceed?$"
+}
+
+text TestingGrounds_Exterior1_Text_UpgradeReceived {
+    "{PLAYER} received {STR_VAR_2}!$"
+}
+
+text TestingGrounds_Exterior1_Text_UpgradeDone {
+    "{STR_VAR_3} is now your GYM's\n"
+    "signature move!\p"
+    "May it strike fear into every\n"
+    "challenger!$"
 }
 
 text TestingGrounds_Exterior1_Text_ExamUnlockedNote {

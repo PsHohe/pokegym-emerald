@@ -652,6 +652,10 @@ gSpecials::
 	def_special GymChallenge_GiveGymStarters
 	def_special GymChallenge_AssignSignatureTM
 	def_special GymChallenge_BufferSignatureMove
+	def_special GymChallenge_CanUpgradeSignatureTM
+	def_special GymChallenge_BufferSignatureUpgradeChoices
+	def_special GymChallenge_UpgradeSignatureTM
+	def_special GymChallenge_BufferChallengerIntro
 	def_special GymChallenge_BufferRankInfo
 	def_special GymChallenge_BufferGymProgress
 	def_special GymTeams_RegisterParty

@@ -169,21 +169,25 @@ static const struct BattleFrontierTrainer sRank1StrongChallengers[] =
 static const struct GymChallengerSpeech sRank1StrongSpeech[] =
 {
     {
+        .introText = COMPOUND_STRING("{STR_VAR_1}: I've watched every one\nof your GYM battles, LEADER.\pMy team was built to take\nyours apart!"),
         .beforeText = COMPOUND_STRING("I've studied your GYM.\nNo mercy!"),
         .playerLostText = COMPOUND_STRING("Preparation beats\nreputation. Every time."),
         .playerWonText = COMPOUND_STRING("I countered everything…\nand still lost?!"),
     },
     {
+        .introText = COMPOUND_STRING("{STR_VAR_1}: A win here would make\nmy career.\pI picked my POKéMON just\nfor your GYM. Let's go!"),
         .beforeText = COMPOUND_STRING("Your streak ends with me."),
         .playerLostText = COMPOUND_STRING("Told you. Streaks are\nmade to be broken."),
         .playerWonText = COMPOUND_STRING("Tch… You've earned that\nstreak, LEADER."),
     },
     {
+        .introText = COMPOUND_STRING("{STR_VAR_1}: I foresaw your every\nmove before I walked in.\pThis battle is already\ndecided!"),
         .beforeText = COMPOUND_STRING("I foresaw this battle.\nAnd your defeat."),
         .playerLostText = COMPOUND_STRING("The future never lies\nto me."),
         .playerWonText = COMPOUND_STRING("Impossible… I did not\nforesee this outcome."),
     },
     {
+        .introText = COMPOUND_STRING("{STR_VAR_1}: Hee hee… Your GYM has\nsuch a lovely aura…\pLet's see if it survives\nmy little curse."),
         .beforeText = COMPOUND_STRING("A little curse for you…\nGood luck, LEADER."),
         .playerLostText = COMPOUND_STRING("Hee hee… The curse\nalways works."),
         .playerWonText = COMPOUND_STRING("My curse… broken?\nHow fascinating…"),

@@ -73,11 +73,15 @@ static const struct GymRankInfo *GetRankInfo(void)
     return &sGymRanks[rank - 1];
 }
 
-// In-battle dialogue. The frontier renders facility trainers' battle-end
+// Challenger dialogue. The frontier renders facility trainers' battle-end
 // speech from 6-word easy chat arrays; gym challengers use plain text
-// instead (see the gate in CopyFrontierTrainerText).
+// instead (see the gate in CopyFrontierTrainerText). introText is the
+// overworld line on arrival ({STR_VAR_1} expands to the trainer's name),
+// shown via GymChallenge_BufferChallengerIntro + msgbox gStringVar4 so the
+// map script needs no per-challenger dialogue.
 struct GymChallengerSpeech
 {
+    const u8 *introText;
     const u8 *beforeText;     // FRONTIER_BEFORE_TEXT
     const u8 *playerLostText; // FRONTIER_PLAYER_LOST_TEXT (challenger won)
     const u8 *playerWonText;  // FRONTIER_PLAYER_WON_TEXT (challenger lost)
@@ -85,6 +89,8 @@ struct GymChallengerSpeech
 
 #include "data/gym_challengers/rank1_common.h"
 #include "data/gym_challengers/rank1_strong.h"
+#include "data/gym_challengers/rank2_common.h"
+#include "data/gym_challengers/rank3_common.h"
 
 // A challenger roster: the trainer table (frontier-compatible), the mon pool
 // its monSets index into, and the matching in-battle speech.
@@ -117,6 +123,27 @@ static const struct GymChallengerSet sChallengerSets[GYM_RANK_COUNT][GYM_TIER_CO
             .speech = sRank1StrongSpeech,
             .monPool = sRank1StrongMons,
             .trainerCount = ARRAY_COUNT(sRank1StrongChallengers),
+        },
+    },
+    [1] =
+    {
+        [GYM_TIER_COMMON] =
+        {
+            .trainers = sRank2CommonChallengers,
+            .speech = sRank2CommonSpeech,
+            .monPool = sRank2CommonMons,
+            .trainerCount = ARRAY_COUNT(sRank2CommonChallengers),
+        },
+        // Strong falls back to the rank 1 strong roster (level-scaled).
+    },
+    [2] =
+    {
+        [GYM_TIER_COMMON] =
+        {
+            .trainers = sRank3CommonChallengers,
+            .speech = sRank3CommonSpeech,
+            .monPool = sRank3CommonMons,
+            .trainerCount = ARRAY_COUNT(sRank3CommonChallengers),
         },
     },
 };
@@ -288,6 +315,14 @@ void GymChallenge_PickChallenger(void)
     SetBattleFacilityTrainerGfxId(id, 0);
     StringCopy(gStringVar1, set->trainers[id].trainerName);
     gSpecialVar_Result = id;
+}
+
+// Expands the current challenger's overworld intro line into gStringVar4
+// (the name from PickChallenger is still in gStringVar1 for {STR_VAR_1}).
+// The script displays it with "msgbox gStringVar4".
+void GymChallenge_BufferChallengerIntro(void)
+{
+    StringExpandPlaceholders(gStringVar4, GetChallengerSet()->speech[sCurrentChallenger].introText);
 }
 
 // Fixed IVs for counter-picked strong parties (the frontier's lowest band
@@ -650,6 +685,77 @@ void GymChallenge_AssignSignatureTM(void)
         gSaveBlock3Ptr->gym.signatureMove = move;
     }
     item = GetTMHMItemIdFromMoveId(move);
+    CopyItemName(item, gStringVar2);
+    StringCopy(gStringVar3, GetMoveName(move));
+    gSpecialVar_Result = TRUE;
+}
+
+// Tier-2 signature TM choices per gym type, offered once at rank 5. Only
+// the chosen move counts afterwards — off-type mons taught the tier-1 move
+// stop qualifying (the upgrade dialogue warns about this).
+static const u16 sGymSignatureUpgrades[NUMBER_OF_MON_TYPES][2] =
+{
+    [TYPE_NORMAL]   = {MOVE_RETURN, MOVE_HYPER_BEAM},
+    [TYPE_FIGHTING] = {MOVE_CLOSE_COMBAT, MOVE_FOCUS_PUNCH},
+    [TYPE_FLYING]   = {MOVE_AIR_SLASH, MOVE_BRAVE_BIRD},
+    [TYPE_POISON]   = {MOVE_GUNK_SHOT, MOVE_TOXIC},
+    [TYPE_GROUND]   = {MOVE_EARTHQUAKE, MOVE_EARTH_POWER},
+    [TYPE_ROCK]     = {MOVE_STONE_EDGE, MOVE_ROCK_SLIDE},
+    [TYPE_BUG]      = {MOVE_BUG_BUZZ, MOVE_U_TURN},
+    [TYPE_GHOST]    = {MOVE_SHADOW_BALL, MOVE_PHANTOM_FORCE},
+    [TYPE_STEEL]    = {MOVE_IRON_TAIL, MOVE_FLASH_CANNON},
+    [TYPE_FIRE]     = {MOVE_FLAMETHROWER, MOVE_FIRE_BLAST},
+    [TYPE_WATER]    = {MOVE_SCALD, MOVE_HYDRO_PUMP},
+    [TYPE_GRASS]    = {MOVE_ENERGY_BALL, MOVE_SOLAR_BEAM},
+    [TYPE_ELECTRIC] = {MOVE_THUNDERBOLT, MOVE_THUNDER},
+    [TYPE_PSYCHIC]  = {MOVE_PSYCHIC, MOVE_ZEN_HEADBUTT},
+    [TYPE_ICE]      = {MOVE_ICE_BEAM, MOVE_BLIZZARD},
+    [TYPE_DRAGON]   = {MOVE_OUTRAGE, MOVE_DRAGON_PULSE},
+    [TYPE_DARK]     = {MOVE_DARK_PULSE, MOVE_CRUNCH},
+    [TYPE_FAIRY]    = {MOVE_PLAY_ROUGH, MOVE_MOONBLAST},
+};
+
+#define GYM_TM_UPGRADE_RANK 5
+
+// VAR_RESULT receives whether the rank-5 signature TM upgrade is available:
+// rank high enough, a tier-1 move assigned, and not yet upgraded.
+void GymChallenge_CanUpgradeSignatureTM(void)
+{
+    u16 move = gSaveBlock3Ptr->gym.signatureMove;
+    const u16 *choices = sGymSignatureUpgrades[GetSafeGymType()];
+
+    gSpecialVar_Result = GymChallenge_GetRank() >= GYM_TM_UPGRADE_RANK
+                      && move != MOVE_NONE
+                      && move != choices[0]
+                      && move != choices[1];
+}
+
+// Buffers the two upgrade choices' move names (gStringVar1, gStringVar2)
+// for the selection menu.
+void GymChallenge_BufferSignatureUpgradeChoices(void)
+{
+    const u16 *choices = sGymSignatureUpgrades[GetSafeGymType()];
+
+    StringCopy(gStringVar1, GetMoveName(choices[0]));
+    StringCopy(gStringVar2, GetMoveName(choices[1]));
+}
+
+// Replaces the signature move with upgrade choice gSpecialVar_0x8004 (0/1)
+// and puts the new TM in the bag. Buffers the TM item name to gStringVar2
+// and the move name to gStringVar3. VAR_RESULT receives FALSE (and nothing
+// changes) if the bag is full.
+void GymChallenge_UpgradeSignatureTM(void)
+{
+    u32 choice = (gSpecialVar_0x8004 != 0);
+    u16 move = sGymSignatureUpgrades[GetSafeGymType()][choice];
+    u16 item = GetTMHMItemIdFromMoveId(move);
+
+    if (!AddBagItem(item, 1))
+    {
+        gSpecialVar_Result = FALSE;
+        return;
+    }
+    gSaveBlock3Ptr->gym.signatureMove = move;
     CopyItemName(item, gStringVar2);
     StringCopy(gStringVar3, GetMoveName(move));
     gSpecialVar_Result = TRUE;
