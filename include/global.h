@@ -253,12 +253,37 @@ struct NPCFollower
 #include "constants/items.h"
 #define ITEM_FLAGS_COUNT ((ITEMS_COUNT / 8) + ((ITEMS_COUNT % 8) ? 1 : 0))
 
+#include "constants/gym_challenge.h"
+
+// A saved gym team slot refers to a Pokemon by identity, not by location:
+// the mon is found by scanning the party and PC boxes for a matching
+// personality + OT id. References survive box reorganization and only go
+// stale if the mon is released or traded away. {0, 0} means an empty slot.
+struct GymTeamSlot
+{
+    u32 personality;
+    u32 otId;
+};
+
+struct GymSavedTeam
+{
+    struct GymTeamSlot slots[GYM_TEAM_SIZE];
+    u8 numMons;
+};
+
 struct GymLeaderState
 {
     u32 points;               // Spendable Gym Points. XOR-encrypted with the
                               // save encryption key, like money (see money.c).
     u32 pointsEarnedThisRank; // Plain. Fills the rank-up progress bar; reset
                               // to 0 on rank-up. The wallet above is not.
+    u16 winStreak;            // Consecutive challenger wins. Drives the
+                              // strong-challenger chance; reset on a loss or
+                              // rank-up, persists across gym days.
+    u16 signatureMove;        // The gym's signature TM move. Off-type mons
+                              // qualify for gym duty by knowing it. MOVE_NONE
+                              // until the intro assigns it.
+    struct GymSavedTeam teams[GYM_NUM_SAVED_TEAMS];
 };
 
 struct SaveBlock3

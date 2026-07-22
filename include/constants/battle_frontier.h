@@ -18,6 +18,7 @@
 #define FACILITY_LINK_CONTEST      7
 #define FACILITY_UNION_ROOM        8
 #define FACILITY_MULTI_OR_EREADER  9  // Direct Corner multi battles, multi battle with Steven, and e-Reader battles
+#define FACILITY_GYM               10 // Selecting defenders for the player's own gym (gym leader mode)
 
 // Battle Frontier battle modes.
 #define FRONTIER_MODE_SINGLES      0

@@ -644,4 +644,18 @@ gSpecials::
 	def_special GymChallenge_StartBattle, waitstate=1
 	def_special GymChallenge_End
 	def_special GymChallenge_AwardVictoryPoints
+	def_special GymChallenge_RecordLoss
+	def_special GymChallenge_GetStreakTier
+	def_special GymChallenge_BufferStreak
 	def_special GymChallenge_IsRankUpUnlocked
+	def_special GymChallenge_RankUp
+	def_special GymChallenge_GiveGymStarters
+	def_special GymChallenge_AssignSignatureTM
+	def_special GymChallenge_BufferSignatureMove
+	def_special GymChallenge_BufferRankInfo
+	def_special GymChallenge_BufferGymProgress
+	def_special GymTeams_RegisterParty
+	def_special GymTeams_BufferTeam
+	def_special GymTeams_ClearTeam
+	def_special GymTeams_LoadTeamIntoParty
+	def_special GymChallenge_ChooseGymParty, waitstate=1

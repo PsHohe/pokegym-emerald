@@ -29,7 +29,8 @@ The PoC is a single self-contained slice that proves the end-to-end loop:
 
 - Gym type is **fixed to Normal** and gym rank is **fixed to rank 1**
   (≤ 2 Pokémon, all level ≤ 15, all Normal type).
-- A gift NPC hands the player two rules-compliant Normal Pokémon.
+- A gift NPC hands the player three Pokémon of the chosen gym type (at the
+  rank's level cap) and unlocks the party menu, standing in for the starter.
 - An attendant NPC validates the player's team, then opens the gym for
   **3 challengers**, chosen randomly from a pool of 4.
 - Each challenger has a randomly generated party, a unique overworld sprite,
@@ -52,9 +53,9 @@ Everything lives on the test map `TestingGrounds_Exterior1`.
 | --- | --- |
 | `src/gym_challenge.c` | All gym logic: challenger tables, mon pools, party generation hooks, team validation, battle launch, in-battle speech, Gym Points award/accessors and rank-up bar gating. |
 | `include/gym_challenge.h` | C-facing API (functions + facility-pointer/speech hooks). |
-| `include/constants/gym_challenge.h` | Constants shared between C **and** event scripts (validation results, rank-1 rules). Included from `data/event_scripts.s`. |
-| `data/maps/TestingGrounds_Exterior1/map.json` | Object events: gym attendant, gift NPC, and the variable-sprite challenger object. |
-| `data/maps/TestingGrounds_Exterior1/scripts.inc` | The gym day loop, gift NPC, validation messages, movement, and all dialogue text. |
+| `include/constants/gym_challenge.h` | Constants shared between C **and** event scripts (validation results, rank bounds, wave size, saved-team dimensions). Included from `data/event_scripts.s`, so preprocessor defines only. |
+| `data/maps/TestingGrounds_Exterior1/map.json` | Object events: gym attendant, gift NPC, team keeper, rank examiner, and the variable-sprite challenger object. |
+| `data/maps/TestingGrounds_Exterior1/scripts.pory` | The gym day loop, gift NPC, team keeper (saved teams), rank examiner, and all dialogue text. Compiles to `scripts.inc` (generated — don't edit). |
 | `data/specials.inc` | Registers the six gym script specials (appended at end). |
 | `src/frontier_util.c` | Two small hook points (see §4). |
 | `include/global.h` | `struct GymLeaderState` (points wallet + per-rank bar total) in SaveBlock3. |
@@ -67,12 +68,33 @@ Everything lives on the test map `TestingGrounds_Exterior1`.
 1. Build (`make -j`) and run `pokeemerald.gba`.
 2. Warp to `TestingGrounds_Exterior1` (debug menu: hold **R + START** →
    warp). The map also has a walk-out warp to Littleroot Town.
-3. Talk to the gift NPC (Expert, at 10,8) to receive Zigzagoon + Whismur.
-4. Make those two your only party members (deposit anything else via PC or the
-   debug menu).
-5. Talk to the attendant (at 7,7) and open the gym. Try opening with an illegal
-   team (3 mons / an over-levelled mon / a non-Normal mon) to see each
-   validation message.
+3. Talk to the gift NPC (Expert ♂, at 10,8): receive **three Pokémon of your
+   chosen gym type** at the current rank's level cap, plus the gym's
+   **signature TM** (tier-1 move per type, `sGymSignatureMoves` in
+   `src/gym_challenge.c`; sets `gym.signatureMove`). The party menu unlocks
+   (`FLAG_SYS_POKEMON_GET`), as if you'd been given a starter. To test the
+   off-type rule: rank up to 3+, teach the signature TM to an off-type mon,
+   and it becomes selectable (one per team). Six new TMs (TM51–56:
+   X-Scissor, Shadow Claw, Fire Punch, Psyshock, Avalanche, Dazzling Gleam)
+   were added to `FOREACH_TM` to cover types without a suitable vanilla TM.
+4. Talk to the **team keeper** (Scientist, at 4,7): register the current
+   party as one of the 5 saved teams, view a team's members (stale
+   references show as `???`), or clear a team.
+5. Talk to the **rank examiner** (Expert ♀, at 12,7): see the current rank's
+   rules (level cap, bring count, off-type slot from rank 3), the gym type
+   and rank-up bar progress — and rank up on the spot (test-only shortcut,
+   no exam).
+6. Talk to the attendant (Teala, at 7,7) to open the gym: choose the
+   defending team (current party or a saved team — saved-team members are
+   fetched from the PC automatically), then pick exactly the rank's bring
+   count in the selection menu. Ineligible mons (over the level cap,
+   off-type without the signature move) are grayed out; backing out with B
+   cancels the opening and restores your roaming party. The roaming party
+   is also restored automatically when the gym closes after the wave or a
+   loss.
+
+The map scripts live in `scripts.pory` (Poryscript); `scripts.inc` is
+generated output — edit only the `.pory`.
 
 ## 3. How it works: reusing the Battle Frontier
 
@@ -231,28 +253,61 @@ through its own rank-based pools and IV bands instead.
 
 Recommended next steps, roughly in order:
 
-1. **Gym rank system.** Replace the hardcoded rank-1 constants in
-   `include/constants/gym_challenge.h` with a value read from a new save field.
-   Rank should drive: team size, level cap, number of challengers, challenger
-   difficulty (IV band / mon pool tier), and possibly the chance of a
-   higher-difficulty challenger appearing.
-2. **Persistent gym state.** Partially done: the Gym Points wallet and
-   per-rank bar total live in `SaveBlock3.gym` (`struct GymLeaderState`,
-   `include/global.h`) and the rank in `VAR_GYM_RANK`. Win/loss records and
-   other career stats still need fields when they exist.
-3. **Player-chosen gym type.** Replace `#define GYM_TYPE TYPE_NORMAL` with a
-   saved value chosen at game start, and key the challenger mon pools off the
+1. **Gym rank system.** ✅ Done: `sGymRanks[GYM_RANK_COUNT]`
+   (`src/gym_challenge.c`) drives level cap (15→65), bring count (2→4),
+   off-type slots (1 from rank 3, gated on the mon knowing the gym's
+   signature move, `gym.signatureMove`) and the rank-up bar threshold, all
+   keyed on `VAR_GYM_RANK` (advance with `special GymChallenge_RankUp`,
+   which also resets the bar and win streak). Still to come: per-rank
+   challenger pools/difficulty and the strong-challenger chance.
+2. **Persistent gym state.** Partially done: `SaveBlock3.gym`
+   (`struct GymLeaderState`, `include/global.h`) holds the Gym Points
+   wallet, per-rank bar total, `winStreak`, `signatureMove`, and the saved
+   team references (`teams[GYM_NUM_SAVED_TEAMS]`, identity-based
+   personality+OT id pairs); the rank lives in `VAR_GYM_RANK`. Win/loss
+   records and other career stats still need fields when they exist.
+   Note: growing this struct shifts the SaveBlock3 layout — old dev saves
+   read garbage in the gym fields; start a new save after layout changes.
+3. **Player-chosen gym type.** Partially done: team validation reads
+   `VAR_CHOSEN_GYM_TYPE` (set by the intro) via `GymChallenge_GetGymType`.
+   Still to come: key the challenger mon pools off the
    gym type (e.g. counter-type challengers).
-4. **Registered teams.** Store gym teams as `struct BoxPokemon[6]` and swap them
-   in/out of the party, mirroring the frontier's
-   `SavePlayerParty()` / `LoadPlayerParty()` pattern
-   (`src/load_save.c`). Add a management UI (the frontier "choose team" party
-   menu and `dynmultichoice` are good templates).
-5. **Variable challenge waves.** Randomise the number of challengers and add a
-   chance for a tougher challenger, instead of a fixed 3.
-6. **Content scale-out.** As the challenger roster grows, move the tables out of
-   `src/gym_challenge.c` into dedicated data files under, e.g.,
-   `src/data/gym_challengers/`.
+4. **Registered teams.** ✅ Done (reference-based): teams are identity
+   references (`GymSavedTeam` in SaveBlock3), registered from the current
+   party at the team keeper and resolved against party + boxes at gym-open.
+   The gym-open flow: pick a source (party or saved team) → the roaming
+   party is backed up (`SavePlayerParty` special) and the team swapped in
+   (`GymTeams_LoadTeamIntoParty`) → the frontier choose-half party menu
+   runs under gym rules (`GymChallenge_ChooseGymParty` sets
+   `VAR_FRONTIER_FACILITY = FACILITY_GYM`; see the gym cases in
+   `src/party_menu.c` for level cap, type/signature-move eligibility, and
+   the max-one-off-type confirm check) → `ReducePlayerPartyToSelectedMons`.
+   `LoadPlayerParty` restores the roaming party on cancel, loss, or day
+   end. Still to come: a graphical team editor (per-slot add/remove).
+5. **Variable challenge waves.** ✅ Partially done — the streak system:
+   `gym.winStreak` grows on every win, resets on a loss
+   (`GymChallenge_RecordLoss`) or rank-up. Each incoming challenger rolls
+   strong with chance `min(20 + 10 × streak, 80)`%
+   (`GYM_STRONG_CHANCE_*` in `include/constants/gym_challenge.h`);
+   `GymChallenge_PickChallenger` reports the tier in `VAR_0x8006`. Strong
+   wins pay ×2 Gym Points. The attendant's opening phrase hints at the
+   chance in four flavor tiers (`GymChallenge_GetStreakTier`), and a strong
+   arrival gets an extra warning line.
+6. **Challenger tiers & counter-picking.** ✅ Done: challenger rosters live
+   in `src/data/gym_challengers/rank<N>_<tier>.h`, wired through
+   `sChallengerSets[rank][tier]` (ranks without content fall back to
+   rank 1). Common challengers use the frontier's random fill; **strong**
+   challengers have wider, type-diverse pools with held items/EVs, a
+   higher fixed-IV band (`GYM_STRONG_FIXED_IV`), their own intro/battle
+   dialogue, and a **counter-picked party**: `FillStrongChallengerParty`
+   scores every pool entry against the gym's type (best damaging move in,
+   gym STAB back — `ScoreStrongCandidate`, Dome-style point table) and
+   draws from the top of the ranking with a small skip chance for variety.
+   See `spike-challenger-counterpick.md` for the original exploration.
+7. **Content scale-out.** ✅ Structure done: challenger tables live under
+   `src/data/gym_challengers/` (rank 1 common + strong authored). Remaining
+   content work: rosters for ranks 2–8 (both tiers) and the rank-5
+   signature-TM upgrade choice.
 
 ### Known PoC caveats
 

@@ -12,6 +12,7 @@
 #include "match_call.h"
 #include "lilycove_lady.h"
 #include "load_save.h"
+#include "main_menu.h"
 #include "pokeblock.h"
 #include "dewford_trend.h"
 #include "berry.h"
@@ -185,6 +186,7 @@ void NewGameInitData(void)
     ClearPokedexFlags();
     InitEventData();
     VarSet(VAR_GYM_RANK, 1);
+    VarSet(VAR_CHOSEN_GYM_TYPE, GetNewGameGymTypeChoice());
     ClearTVShowData();
     ResetGabbyAndTy();
     ClearSecretBases();

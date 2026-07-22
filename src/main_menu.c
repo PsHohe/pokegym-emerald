@@ -1759,6 +1759,17 @@ static u8 sGymTypeListTaskId;
 static u8 sGymTypeArrowTaskId;
 static u16 sGymTypeListScrollOffset;
 
+// The chosen gym type is stashed here rather than written to
+// VAR_CHOSEN_GYM_TYPE directly: the Birch speech runs before
+// NewGameInitData, which clears SaveBlock1 (and with it all vars).
+// NewGameInitData reads this back and sets the var after InitEventData.
+static u16 sChosenGymType;
+
+u16 GetNewGameGymTypeChoice(void)
+{
+    return sChosenGymType;
+}
+
 static const struct ListMenuTemplate sGymTypeListMenuTemplate =
 {
     .items = sGymTypeMenuItems,
@@ -1864,7 +1875,7 @@ static void Task_NewGameBirchSpeech_WaitGymTypeChoice(u8 taskId)
         break;
     default:
         PlaySE(SE_SELECT);
-        VarSet(VAR_CHOSEN_GYM_TYPE, sGymTypeChoices[input]);
+        sChosenGymType = sGymTypeChoices[input];
         DestroyListMenuTask(sGymTypeListTaskId, NULL, NULL);
         RemoveScrollIndicatorArrowPair(sGymTypeArrowTaskId);
         NewGameBirchSpeech_ClearGenderWindow(GYM_TYPE_MENU_WIN, TRUE);

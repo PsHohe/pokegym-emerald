@@ -29,6 +29,7 @@
 #include "follower_npc.h"
 #include "frontier_util.h"
 #include "gpu_regs.h"
+#include "gym_challenge.h"
 #include "graphics.h"
 #include "international_string_util.h"
 #include "item.h"
@@ -7320,6 +7321,21 @@ static bool8 GetBattleEntryEligibility(struct Pokemon *mon)
         return FALSE;
     case FACILITY_UNION_ROOM:
         return TRUE;
+    case FACILITY_GYM:
+        // Gym defenders must match the gym's type; an off-type mon is only
+        // selectable if the rank has off-type slots and it knows the gym's
+        // signature move. (The level cap is enforced above through
+        // GetBattleEntryLevelCap; the one-off-type-max rule is checked on
+        // confirm in CheckBattleEntriesAndGetMessage.)
+        species = GetMonData(mon, MON_DATA_SPECIES);
+        if (gSpeciesInfo[species].types[0] == GymChallenge_GetGymType()
+         || gSpeciesInfo[species].types[1] == GymChallenge_GetGymType())
+            return TRUE;
+        if (GymChallenge_GetOffTypeSlots() > 0
+         && gSaveBlock3Ptr->gym.signatureMove != MOVE_NONE
+         && MonKnowsMove(mon, gSaveBlock3Ptr->gym.signatureMove))
+            return TRUE;
+        return FALSE;
     default: // Battle Frontier
         species = GetMonData(mon, MON_DATA_SPECIES);
         if (gSpeciesInfo[species].isFrontierBanned)
@@ -7348,6 +7364,27 @@ static u8 CheckBattleEntriesAndGetMessage(void)
     facility = VarGet(VAR_FRONTIER_FACILITY);
     if (facility == FACILITY_UNION_ROOM || facility == FACILITY_MULTI_OR_EREADER)
         return 0xFF;
+
+    if (facility == FACILITY_GYM)
+    {
+        // The gym allows duplicate species/items but caps how many selected
+        // mons may be off-type (they entered eligibility by knowing the
+        // signature move).
+        u32 offType = 0;
+
+        maxBattlers = GetMaxBattleEntries();
+        for (i = 0; i < maxBattlers; i++)
+        {
+            enum Species species = GetMonData(&party[order[i] - 1], MON_DATA_SPECIES);
+
+            if (gSpeciesInfo[species].types[0] != GymChallenge_GetGymType()
+             && gSpeciesInfo[species].types[1] != GymChallenge_GetGymType())
+                offType++;
+        }
+        if (offType > GymChallenge_GetOffTypeSlots())
+            return PARTY_MSG_ONE_OFF_TYPE_ONLY;
+        return 0xFF;
+    }
 
     maxBattlers = GetMaxBattleEntries();
     for (i = 0; i < maxBattlers - 1; i++)
@@ -7439,6 +7476,8 @@ static u8 GetBattleEntryLevelCap(void)
         return MAX_LEVEL;
     case FACILITY_UNION_ROOM:
         return UNION_ROOM_MAX_LEVEL;
+    case FACILITY_GYM:
+        return GymChallenge_GetLevelCap();
     default: // Battle Frontier
         if (gSpecialVar_0x8004 == FRONTIER_LVL_50)
             return FRONTIER_MAX_LEVEL_50;

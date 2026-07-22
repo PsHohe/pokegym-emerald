@@ -1,0 +1,671 @@
+// Testing grounds for the gym leader mode. This map exercises the gym
+// features and is not part of the real story.
+
+mapscripts TestingGrounds_Exterior1_MapScripts {
+    MAP_SCRIPT_ON_TRANSITION {
+        setflag(FLAG_TEMP_2) // Keep the challenger object hidden until one arrives
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Gift NPC: hands out three Pokemon of the gym's type at the rank's level
+// cap, and enables the party menu (as if the player received a starter).
+// ---------------------------------------------------------------------------
+script TestingGrounds_Exterior1_EventScript_GiftNpc {
+    lock
+    faceplayer
+    if (flag(FLAG_UNUSED_0x020)) {
+        // Retry the signature TM in case the bag was full the first time.
+        special(GymChallenge_AssignSignatureTM)
+        msgbox(TestingGrounds_Exterior1_Text_GiftPostGift)
+        release
+        end
+    }
+    special(GymChallenge_BufferGymProgress) // STR_VAR_1 = gym type name
+    msgbox(TestingGrounds_Exterior1_Text_GiftIntro)
+    special(GymChallenge_GiveGymStarters)
+    if (!var(VAR_RESULT)) {
+        msgbox(TestingGrounds_Exterior1_Text_GiftNoRoom)
+        release
+        end
+    }
+    setflag(FLAG_UNUSED_0x020)
+    setflag(FLAG_SYS_POKEMON_GET)
+    playfanfare(MUS_OBTAIN_ITEM)
+    message(TestingGrounds_Exterior1_Text_GiftReceived)
+    waitfanfare
+    waitmessage
+    special(GymChallenge_AssignSignatureTM)
+    if (var(VAR_RESULT) == TRUE) {
+        playfanfare(MUS_OBTAIN_TMHM)
+        message(TestingGrounds_Exterior1_Text_ReceivedSignatureTM)
+        waitfanfare
+        waitmessage
+        msgbox(TestingGrounds_Exterior1_Text_ExplainSignatureTM)
+    } else {
+        msgbox(TestingGrounds_Exterior1_Text_SignatureTMNoRoom)
+    }
+    special(GymChallenge_BufferRankInfo)
+    msgbox(TestingGrounds_Exterior1_Text_GiftExplainRules)
+    release
+    end
+}
+
+// ---------------------------------------------------------------------------
+// Gym attendant: pick the defending team (party or saved team), select which
+// members defend under the gym rules, then run the challenge loop. The
+// roaming party is backed up before any swap and restored when the gym
+// closes, whatever the outcome.
+// ---------------------------------------------------------------------------
+script TestingGrounds_Exterior1_EventScript_GymAttendant {
+    lock
+    faceplayer
+    msgbox(TestingGrounds_Exterior1_Text_OpenGymPrompt, MSGBOX_YESNO)
+    if (var(VAR_RESULT) == NO) {
+        msgbox(TestingGrounds_Exterior1_Text_ComeBackAnytime)
+        release
+        end
+    }
+    message(TestingGrounds_Exterior1_Text_ChooseTeamSource)
+    waitmessage
+    dynmultichoice(0, 0, FALSE, 7, 0, DYN_MULTICHOICE_CB_NONE,
+        TestingGrounds_Exterior1_Text_SourceParty,
+        TestingGrounds_Exterior1_Text_Team1,
+        TestingGrounds_Exterior1_Text_Team2,
+        TestingGrounds_Exterior1_Text_Team3,
+        TestingGrounds_Exterior1_Text_Team4,
+        TestingGrounds_Exterior1_Text_Team5,
+        TestingGrounds_Exterior1_Text_SourceCancel)
+    if (var(VAR_RESULT) == MULTI_B_PRESSED || var(VAR_RESULT) == 6) {
+        msgbox(TestingGrounds_Exterior1_Text_ComeBackAnytime)
+        release
+        end
+    }
+    if (var(VAR_RESULT) == 0) {
+        special(SavePlayerParty)
+    } else {
+        copyvar(VAR_0x8004, VAR_RESULT)
+        subvar(VAR_0x8004, 1)
+        special(GymTeams_LoadTeamIntoParty)
+        if (!var(VAR_RESULT)) {
+            msgbox(TestingGrounds_Exterior1_Text_TeamUnavailable)
+            release
+            end
+        }
+    }
+    special(GymChallenge_BufferRankInfo)
+    msgbox(TestingGrounds_Exterior1_Text_PickDefenders)
+    fadescreen(FADE_TO_BLACK)
+    special(GymChallenge_ChooseGymParty)
+    if (!var(VAR_RESULT)) {
+        special(LoadPlayerParty)
+        msgbox(TestingGrounds_Exterior1_Text_ComeBackAnytime)
+        release
+        end
+    }
+    special(ReducePlayerPartyToSelectedMons)
+    special(GymChallenge_Begin)
+    switch (var(VAR_RESULT)) {
+        case GYM_TEAM_WRONG_SIZE:
+            special(LoadPlayerParty)
+            special(GymChallenge_BufferRankInfo)
+            msgbox(TestingGrounds_Exterior1_Text_TeamWrongSize)
+            release
+            end
+        case GYM_TEAM_OVERLEVELED:
+            special(LoadPlayerParty)
+            special(GymChallenge_BufferRankInfo)
+            msgbox(TestingGrounds_Exterior1_Text_TeamOverleveled)
+            release
+            end
+        case GYM_TEAM_WRONG_TYPE:
+            special(LoadPlayerParty)
+            special(GymChallenge_BufferGymProgress)
+            msgbox(TestingGrounds_Exterior1_Text_TeamWrongType)
+            release
+            end
+    }
+    msgbox(TestingGrounds_Exterior1_Text_GymIsOpen)
+    special(GymChallenge_GetStreakTier)
+    switch (var(VAR_RESULT)) {
+        case 0: msgbox(TestingGrounds_Exterior1_Text_StreakPhraseCalm)
+        case 1: msgbox(TestingGrounds_Exterior1_Text_StreakPhraseStirring)
+        case 2: msgbox(TestingGrounds_Exterior1_Text_StreakPhraseSpreading)
+        case 3: msgbox(TestingGrounds_Exterior1_Text_StreakPhrasePeak)
+    }
+    closemessage
+    setvar(VAR_TEMP_3, 0)
+    while (var(VAR_TEMP_3) < GYM_NUM_CHALLENGES_PER_WAVE) {
+        if (var(VAR_TEMP_3) > 0) {
+            msgbox(TestingGrounds_Exterior1_Text_NextChallengerArrived)
+            closemessage
+        }
+        special(GymChallenge_PickChallenger)
+        addobject(LOCALID_TESTING_GYM_CHALLENGER)
+        applymovement(LOCALID_TESTING_GYM_CHALLENGER, moves(walk_down * 2))
+        waitmovement(0)
+        if (var(VAR_0x8006) == GYM_TIER_STRONG) {
+            msgbox(TestingGrounds_Exterior1_Text_StrongChallengerWarning)
+            closemessage
+            switch (var(VAR_RESULT)) {
+                case 0: msgbox(TestingGrounds_Exterior1_Text_IntroVito)
+                case 1: msgbox(TestingGrounds_Exterior1_Text_IntroNadia)
+                case 2: msgbox(TestingGrounds_Exterior1_Text_IntroIvan)
+                case 3: msgbox(TestingGrounds_Exterior1_Text_IntroMara)
+            }
+        } else {
+            switch (var(VAR_RESULT)) {
+                case 0: msgbox(TestingGrounds_Exterior1_Text_IntroBenny)
+                case 1: msgbox(TestingGrounds_Exterior1_Text_IntroDino)
+                case 2: msgbox(TestingGrounds_Exterior1_Text_IntroRika)
+                case 3: msgbox(TestingGrounds_Exterior1_Text_IntroTommy)
+            }
+        }
+        special(HealPlayerParty)
+        special(GymChallenge_StartBattle)
+        specialvar(VAR_RESULT, GetBattleOutcome)
+        if (var(VAR_RESULT) != B_OUTCOME_WON) {
+            special(GymChallenge_RecordLoss)
+            msgbox(TestingGrounds_Exterior1_Text_LeaderLost)
+            closemessage
+            applymovement(LOCALID_TESTING_GYM_CHALLENGER, moves(walk_up * 2))
+            waitmovement(0)
+            removeobject(LOCALID_TESTING_GYM_CHALLENGER)
+            special(GymChallenge_End)
+            special(LoadPlayerParty)
+            special(HealPlayerParty)
+            msgbox(TestingGrounds_Exterior1_Text_GymClosedAfterLoss)
+            release
+            end
+        }
+        msgbox(TestingGrounds_Exterior1_Text_ChallengerDefeated)
+        special(GymChallenge_AwardVictoryPoints)
+        playfanfare(MUS_OBTAIN_B_POINTS)
+        message(TestingGrounds_Exterior1_Text_EarnedGymPoints)
+        waitfanfare
+        waitmessage
+        if (var(VAR_RESULT) == TRUE) {
+            msgbox(TestingGrounds_Exterior1_Text_BarFilled)
+        }
+        closemessage
+        applymovement(LOCALID_TESTING_GYM_CHALLENGER, moves(walk_up * 2))
+        waitmovement(0)
+        removeobject(LOCALID_TESTING_GYM_CHALLENGER)
+        addvar(VAR_TEMP_3, 1)
+    }
+    special(GymChallenge_End)
+    special(LoadPlayerParty)
+    special(HealPlayerParty)
+    msgbox(TestingGrounds_Exterior1_Text_GymDayComplete)
+    special(GymChallenge_IsRankUpUnlocked)
+    if (var(VAR_RESULT) == TRUE) {
+        msgbox(TestingGrounds_Exterior1_Text_ExamAvailable)
+    }
+    release
+    end
+}
+
+// ---------------------------------------------------------------------------
+// Team keeper: the saved-teams PC. Register the current party as a team,
+// view a team's members, or clear a team.
+// ---------------------------------------------------------------------------
+script TestingGrounds_Exterior1_EventScript_TeamKeeper {
+    lock
+    faceplayer
+    msgbox(TestingGrounds_Exterior1_Text_TeamKeeperIntro)
+    while {
+        message(TestingGrounds_Exterior1_Text_ChooseTeam)
+        waitmessage
+        dynmultichoice(0, 0, FALSE, 6, 0, DYN_MULTICHOICE_CB_NONE,
+            TestingGrounds_Exterior1_Text_Team1,
+            TestingGrounds_Exterior1_Text_Team2,
+            TestingGrounds_Exterior1_Text_Team3,
+            TestingGrounds_Exterior1_Text_Team4,
+            TestingGrounds_Exterior1_Text_Team5,
+            TestingGrounds_Exterior1_Text_TeamMenuExit)
+        if (var(VAR_RESULT) == MULTI_B_PRESSED || var(VAR_RESULT) == GYM_NUM_SAVED_TEAMS) {
+            break
+        }
+        copyvar(VAR_0x8004, VAR_RESULT)
+        copyvar(VAR_TEMP_1, VAR_RESULT)
+        addvar(VAR_TEMP_1, 1)
+        buffernumberstring(STR_VAR_2, VAR_TEMP_1) // STR_VAR_2 = team number
+        special(GymTeams_BufferTeam)              // STR_VAR_1 = member list
+        if (var(VAR_RESULT) == 0) {
+            msgbox(TestingGrounds_Exterior1_Text_TeamEmpty)
+        } else {
+            msgbox(TestingGrounds_Exterior1_Text_TeamMembers)
+        }
+        closemessage
+        dynmultichoice(0, 0, FALSE, 3, 0, DYN_MULTICHOICE_CB_NONE,
+            TestingGrounds_Exterior1_Text_TeamActionRegister,
+            TestingGrounds_Exterior1_Text_TeamActionClear,
+            TestingGrounds_Exterior1_Text_TeamActionBack)
+        switch (var(VAR_RESULT)) {
+            case 0:
+                special(GymTeams_RegisterParty)
+                msgbox(TestingGrounds_Exterior1_Text_TeamRegistered)
+            case 1:
+                special(GymTeams_ClearTeam)
+                msgbox(TestingGrounds_Exterior1_Text_TeamCleared)
+        }
+    }
+    msgbox(TestingGrounds_Exterior1_Text_TeamKeeperBye)
+    release
+    end
+}
+
+// ---------------------------------------------------------------------------
+// Rank examiner: reports the current rank's rules and progress. On this test
+// map they also rank you up on request, no exam needed.
+// ---------------------------------------------------------------------------
+script TestingGrounds_Exterior1_EventScript_RankExaminer {
+    lock
+    faceplayer
+    special(GymChallenge_BufferRankInfo)
+    msgbox(TestingGrounds_Exterior1_Text_RankInfo)
+    special(GymChallenge_BufferSignatureMove)
+    msgbox(TestingGrounds_Exterior1_Text_SignatureMoveInfo)
+    if (var(VAR_GYM_RANK) >= 3) {
+        msgbox(TestingGrounds_Exterior1_Text_OffTypeInfo)
+    }
+    special(GymChallenge_BufferGymProgress)
+    msgbox(TestingGrounds_Exterior1_Text_GymProgress)
+    special(GymChallenge_BufferStreak)
+    msgbox(TestingGrounds_Exterior1_Text_StreakInfo)
+    special(GymChallenge_IsRankUpUnlocked)
+    if (var(VAR_RESULT) == TRUE) {
+        msgbox(TestingGrounds_Exterior1_Text_ExamUnlockedNote)
+    }
+    if (var(VAR_GYM_RANK) >= GYM_RANK_MAX) {
+        msgbox(TestingGrounds_Exterior1_Text_MaxRank)
+        release
+        end
+    }
+    msgbox(TestingGrounds_Exterior1_Text_TestRankUpPrompt, MSGBOX_YESNO)
+    if (var(VAR_RESULT) == YES) {
+        special(GymChallenge_RankUp)
+        special(GymChallenge_BufferRankInfo)
+        msgbox(TestingGrounds_Exterior1_Text_RankedUp)
+    }
+    release
+    end
+}
+
+text TestingGrounds_Exterior1_Text_GiftIntro {
+    "Ah, our new GYM LEADER!\p"
+    "A LEADER needs POKéMON of the GYM's\n"
+    "own type.\p"
+    "Take these three {STR_VAR_1}-type\n"
+    "partners!$"
+}
+
+text TestingGrounds_Exterior1_Text_GiftReceived {
+    "{PLAYER} received three\n"
+    "{STR_VAR_1}-type POKéMON!$"
+}
+
+text TestingGrounds_Exterior1_Text_GiftExplainRules {
+    "At rank {STR_VAR_1}, you defend with\n"
+    "{STR_VAR_3} POKéMON at level {STR_VAR_2}\l"
+    "or below.\p"
+    "Register teams with the TEAM KEEPER,\n"
+    "then speak to the attendant to open\l"
+    "your GYM!$"
+}
+
+text TestingGrounds_Exterior1_Text_ReceivedSignatureTM {
+    "{PLAYER} received {STR_VAR_2}!$"
+}
+
+text TestingGrounds_Exterior1_Text_ExplainSignatureTM {
+    "That TM teaches {STR_VAR_3} -\n"
+    "your GYM's signature move!\p"
+    "One day, outsider POKéMON that\n"
+    "learn it may fight by your side.$"
+}
+
+text TestingGrounds_Exterior1_Text_SignatureTMNoRoom {
+    "Oh! There's no room in your BAG\n"
+    "for the GYM's signature TM.\p"
+    "Come see me when you've made\n"
+    "space.$"
+}
+
+text TestingGrounds_Exterior1_Text_GiftPostGift {
+    "How are your POKéMON doing?\p"
+    "Defend your GYM well and it will\n"
+    "grow in rank!$"
+}
+
+text TestingGrounds_Exterior1_Text_GiftNoRoom {
+    "Oh! You don't have room for three\n"
+    "more POKéMON.\p"
+    "Come back when you've made space.$"
+}
+
+text TestingGrounds_Exterior1_Text_OpenGymPrompt {
+    "Welcome, GYM LEADER {PLAYER}!\p"
+    "Shall we open the GYM and accept\n"
+    "challenges?$"
+}
+
+text TestingGrounds_Exterior1_Text_ComeBackAnytime {
+    "Very well. Come back whenever\n"
+    "you're ready.$"
+}
+
+text TestingGrounds_Exterior1_Text_ChooseTeamSource {
+    "Who defends the GYM today?$"
+}
+
+text TestingGrounds_Exterior1_Text_SourceParty {
+    "CURRENT PARTY$"
+}
+
+text TestingGrounds_Exterior1_Text_SourceCancel {
+    "CANCEL$"
+}
+
+text TestingGrounds_Exterior1_Text_TeamUnavailable {
+    "Hmm… I can't find any of that\n"
+    "team's members.\p"
+    "Have they been released or\n"
+    "traded away?$"
+}
+
+text TestingGrounds_Exterior1_Text_PickDefenders {
+    "Now, pick the {STR_VAR_3} POKéMON\n"
+    "that will defend the GYM!$"
+}
+
+text TestingGrounds_Exterior1_Text_TeamWrongSize {
+    "Hmm… At rank {STR_VAR_1}, a LEADER\n"
+    "defends with up to {STR_VAR_3} POKéMON.\p"
+    "Please adjust your party and\n"
+    "come back.$"
+}
+
+text TestingGrounds_Exterior1_Text_TeamOverleveled {
+    "Hmm… At rank {STR_VAR_1}, your POKéMON\n"
+    "must be level {STR_VAR_2} or below.\p"
+    "Please adjust your party and\n"
+    "come back.$"
+}
+
+text TestingGrounds_Exterior1_Text_TeamWrongType {
+    "Hmm… This is a {STR_VAR_1}-type GYM.\p"
+    "Your team may only include POKéMON\n"
+    "of the GYM's type, or an outsider\l"
+    "that knows your signature move.\p"
+    "Please adjust your party and\n"
+    "come back.$"
+}
+
+text TestingGrounds_Exterior1_Text_GymIsOpen {
+    "The GYM is now open!\p"
+    "Three TRAINERS signed up to\n"
+    "challenge you today.\p"
+    "Here comes the first one!$"
+}
+
+text TestingGrounds_Exterior1_Text_StreakPhraseCalm {
+    "ATTENDANT: Mostly first-timers in\n"
+    "line today.\p"
+    "A calm day at the GYM, I'd say.$"
+}
+
+text TestingGrounds_Exterior1_Text_StreakPhraseStirring {
+    "ATTENDANT: A few familiar faces in\n"
+    "line today…\p"
+    "Some of them have clearly been\n"
+    "training for this.$"
+}
+
+text TestingGrounds_Exterior1_Text_StreakPhraseSpreading {
+    "ATTENDANT: Word of your streak is\n"
+    "spreading, LEADER.\p"
+    "Serious TRAINERS are starting to\n"
+    "line up outside.$"
+}
+
+text TestingGrounds_Exterior1_Text_StreakPhrasePeak {
+    "ATTENDANT: The line is full of\n"
+    "hardened TRAINERS today!\p"
+    "Every one of them has come to end\n"
+    "your streak. Stay sharp!$"
+}
+
+text TestingGrounds_Exterior1_Text_StrongChallengerWarning {
+    "ATTENDANT: Careful, LEADER…\p"
+    "This one has the look of a real\n"
+    "contender!$"
+}
+
+text TestingGrounds_Exterior1_Text_StreakInfo {
+    "Your current win streak:\n"
+    "{STR_VAR_1} in a row.$"
+}
+
+text TestingGrounds_Exterior1_Text_IntroBenny {
+    "{STR_VAR_1}: So you're the new GYM\n"
+    "LEADER?\p"
+    "My POOCHYENA and I are gonna take\n"
+    "your badge, mister!$"
+}
+
+text TestingGrounds_Exterior1_Text_IntroDino {
+    "{STR_VAR_1}: I found sooo many BUG\n"
+    "POKéMON in the woods!\p"
+    "Let's see them squish your\n"
+    "POKéMON!$"
+}
+
+text TestingGrounds_Exterior1_Text_IntroRika {
+    "{STR_VAR_1}: My FIGHTING-type\n"
+    "POKéMON train every day!\p"
+    "Show me what a real GYM LEADER\n"
+    "can do. Prepare yourself!$"
+}
+
+text TestingGrounds_Exterior1_Text_IntroTommy {
+    "{STR_VAR_1}: I studied all about\n"
+    "type matchups in school!\p"
+    "Today's lesson: beating a GYM\n"
+    "LEADER!$"
+}
+
+text TestingGrounds_Exterior1_Text_IntroVito {
+    "{STR_VAR_1}: I've watched every one\n"
+    "of your GYM battles, LEADER.\p"
+    "My team was built to take\n"
+    "yours apart!$"
+}
+
+text TestingGrounds_Exterior1_Text_IntroNadia {
+    "{STR_VAR_1}: A win here would make\n"
+    "my career.\p"
+    "I picked my POKéMON just\n"
+    "for your GYM. Let's go!$"
+}
+
+text TestingGrounds_Exterior1_Text_IntroIvan {
+    "{STR_VAR_1}: I foresaw your every\n"
+    "move before I walked in.\p"
+    "This battle is already\n"
+    "decided!$"
+}
+
+text TestingGrounds_Exterior1_Text_IntroMara {
+    "{STR_VAR_1}: Hee hee… Your GYM has\n"
+    "such a lovely aura…\p"
+    "Let's see if it survives\n"
+    "my little curse.$"
+}
+
+text TestingGrounds_Exterior1_Text_EarnedGymPoints {
+    "{PLAYER} earned {STR_VAR_1} GYM POINTS!$"
+}
+
+text TestingGrounds_Exterior1_Text_BarFilled {
+    "ATTENDANT: Incredible!\p"
+    "Your GYM's reputation has reached\n"
+    "its peak for this rank!\p"
+    "You may take the RANK-UP EXAM\n"
+    "whenever you feel ready!$"
+}
+
+text TestingGrounds_Exterior1_Text_ExamAvailable {
+    "ATTENDANT: Remember, the RANK-UP\n"
+    "EXAM awaits whenever you're ready!$"
+}
+
+text TestingGrounds_Exterior1_Text_ChallengerDefeated {
+    "{STR_VAR_1}: Aww… You really are\n"
+    "the GYM LEADER!\p"
+    "I'll train harder and challenge\n"
+    "you again!$"
+}
+
+text TestingGrounds_Exterior1_Text_NextChallengerArrived {
+    "ATTENDANT: Well defended!\p"
+    "Your POKéMON have been healed.\n"
+    "The next challenger has arrived!$"
+}
+
+text TestingGrounds_Exterior1_Text_LeaderLost {
+    "{STR_VAR_1}: I… I won?!\p"
+    "I beat a GYM LEADER! Wait till\n"
+    "everyone hears about this!$"
+}
+
+text TestingGrounds_Exterior1_Text_GymClosedAfterLoss {
+    "ATTENDANT: Oh no…\p"
+    "We'll close the GYM for today.\n"
+    "Rest up and try again tomorrow!$"
+}
+
+text TestingGrounds_Exterior1_Text_GymDayComplete {
+    "ATTENDANT: That was the last\n"
+    "challenger for today!\p"
+    "You defended your GYM perfectly,\n"
+    "LEADER {PLAYER}!\p"
+    "Keep this up and the GYM's rank\n"
+    "will surely rise!$"
+}
+
+text TestingGrounds_Exterior1_Text_TeamKeeperIntro {
+    "Hello, LEADER! I keep your\n"
+    "registered GYM TEAMS.\p"
+    "A team remembers its members even\n"
+    "if you move them around the PC.$"
+}
+
+text TestingGrounds_Exterior1_Text_ChooseTeam {
+    "Which team shall we look at?$"
+}
+
+text TestingGrounds_Exterior1_Text_Team1 {
+    "TEAM 1$"
+}
+
+text TestingGrounds_Exterior1_Text_Team2 {
+    "TEAM 2$"
+}
+
+text TestingGrounds_Exterior1_Text_Team3 {
+    "TEAM 3$"
+}
+
+text TestingGrounds_Exterior1_Text_Team4 {
+    "TEAM 4$"
+}
+
+text TestingGrounds_Exterior1_Text_Team5 {
+    "TEAM 5$"
+}
+
+text TestingGrounds_Exterior1_Text_TeamMenuExit {
+    "EXIT$"
+}
+
+text TestingGrounds_Exterior1_Text_TeamEmpty {
+    "TEAM {STR_VAR_2} is empty.$"
+}
+
+text TestingGrounds_Exterior1_Text_TeamMembers {
+    "TEAM {STR_VAR_2}:\p"
+    "{STR_VAR_1}$"
+}
+
+text TestingGrounds_Exterior1_Text_TeamActionRegister {
+    "REGISTER PARTY$"
+}
+
+text TestingGrounds_Exterior1_Text_TeamActionClear {
+    "CLEAR TEAM$"
+}
+
+text TestingGrounds_Exterior1_Text_TeamActionBack {
+    "BACK$"
+}
+
+text TestingGrounds_Exterior1_Text_TeamRegistered {
+    "Done! Your current party is now\n"
+    "TEAM {STR_VAR_2}.$"
+}
+
+text TestingGrounds_Exterior1_Text_TeamCleared {
+    "TEAM {STR_VAR_2} has been cleared.$"
+}
+
+text TestingGrounds_Exterior1_Text_TeamKeeperBye {
+    "Come back anytime, LEADER!$"
+}
+
+text TestingGrounds_Exterior1_Text_RankInfo {
+    "EXAMINER: You preside at rank\n"
+    "{STR_VAR_1}, LEADER.\p"
+    "Your GYM team may have {STR_VAR_3}\n"
+    "POKéMON of level {STR_VAR_2} or below.$"
+}
+
+text TestingGrounds_Exterior1_Text_SignatureMoveInfo {
+    "Your GYM's signature move is\n"
+    "{STR_VAR_1}.$"
+}
+
+text TestingGrounds_Exterior1_Text_OffTypeInfo {
+    "At your rank, one team member may\n"
+    "be an outsider type…\p"
+    "…as long as it knows {STR_VAR_1},\n"
+    "your signature move!$"
+}
+
+text TestingGrounds_Exterior1_Text_GymProgress {
+    "You lead a {STR_VAR_1}-type GYM.\p"
+    "Reputation this rank:\n"
+    "{STR_VAR_2} of {STR_VAR_3} points.$"
+}
+
+text TestingGrounds_Exterior1_Text_ExamUnlockedNote {
+    "Your reputation is at its peak!\n"
+    "The RANK-UP EXAM awaits you.$"
+}
+
+text TestingGrounds_Exterior1_Text_MaxRank {
+    "You stand at the very top,\n"
+    "LEADER. There is no higher rank!$"
+}
+
+text TestingGrounds_Exterior1_Text_TestRankUpPrompt {
+    "(TEST) Advance to the next rank\n"
+    "right now?$"
+}
+
+text TestingGrounds_Exterior1_Text_RankedUp {
+    "Congratulations, LEADER!\p"
+    "You now preside at rank {STR_VAR_1}!\p"
+    "New rules: {STR_VAR_3} POKéMON of\n"
+    "level {STR_VAR_2} or below.$"
+}

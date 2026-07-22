@@ -1,6 +1,6 @@
 # Spike: Challenger Counter-Picking (Team Preview)
 
-**Status:** exploration / not implemented. **Depends on:** registered gym teams
+**Status:** IMPLEMENTED (simplified: strong challengers counter-pick against the gym TYPE, not the stored team — see FillStrongChallengerParty in src/gym_challenge.c). Kept for the ideal-version notes (§5 difficulty tiers, §6 scouting model). **Depends on:** registered gym teams
 (`gym-leader-mode.md` §7.4) for the *ideal* version; a stubbed version can run
 against the live party today.
 
